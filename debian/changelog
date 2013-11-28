@@ -1,0 +1,386 @@
+migrate (0.8.2-1) unstable; urgency=low
+
+  * New upstream release:
+    - Now (build-)depends on python-pbr.
+  * Taking over maintainership with previous agreement from Jan Dittberner:
+    - Updated VCS fields to use the OpenStack team repositories.
+    - Changed the Maintainer: and Uploaders: field.
+    - Added a new debian/gbp.conf.
+    - Added (not mandatory) include of pkgos.make.
+  * Added OpenStack foundation as copyright holder.
+  * Ran wrap-and-sort.
+  * Upgraded to debhelper and compat >= 9.
+  * Removed not needed version in build-depends of python-sqlalchemy.
+  * Update path to doc/source/conf.py in Debian patch
+    use-local-intersphinx.patch and disable_issuetracker.patch.
+  * Removes Add_compatibility_with_sqlalchemy_0.8.patch and
+    Fix_dropping_of_indexed_columns_in_sqlite_sa08.patch now applied upstream.
+  * Changed debian/docs to use README.rst instead of just README.
+  * Changed path of docs/changelog.rst to doc/source/ in debian/rules.
+  * Fix section break in debian/copyright.
+  * Added Pre-Depends: dpkg (>= 1.15.6~), because of xz compression.
+
+ -- Thomas Goirand <zigo@debian.org>  Thu, 28 Nov 2013 12:57:24 +0800
+
+migrate (0.7.2-7) unstable; urgency=low
+
+  * Adds upstrema patch which fixes dropping of indexed columns in sqlite
+    with SQLAlchemy 08.
+  * Switched control Homepage: and copyright Source: fields to the new upstream
+    homepage.
+
+ -- Thomas Goirand <zigo@debian.org>  Fri, 18 Oct 2013 14:32:30 +0000
+
+migrate (0.7.2-6) unstable; urgency=low
+
+  * Version-Depends on python-sqlalchemy >= 0.8 (since lower versions
+    are incompatible).
+  * debian/copyright in parsable format v1.
+  * Standards-Version: bump to 3.9.4.
+
+ -- Thomas Goirand <zigo@debian.org>  Mon, 08 Jul 2013 14:45:17 +0000
+
+migrate (0.7.2-5) unstable; urgency=low
+
+  * Team upload.
+  [ Jakub Wilk ]
+  * Use canonical URIs for Vcs-* fields.
+
+  [ Thomas Goirand ]
+  * Adds patch to make python-migrate works with SQLAlchemy >= 0.8.
+    Thanks to Pádraig Brady <P@draigBrady.com> for advising and providing the
+    patch. (Closes: #715374)
+
+ -- Thomas Goirand <zigo@debian.org>  Mon, 08 Jul 2013 14:27:56 +0000
+
+migrate (0.7.2-3) unstable; urgency=low
+
+  * debian/control:
+    - move dependencies from Build-Depends-Indep to Build-Depends
+    - bump Standards-Version to 3.9.3 (no changes)
+    - fix lintian error for dh_addon sphinxdoc by adding
+      python-sphinx (>= 1.0.7+dfsg) | python3-sphinx to Build-Depends
+
+ -- Jan Dittberner <jandd@debian.org>  Thu, 17 May 2012 12:52:03 +0200
+
+migrate (0.7.2-2) unstable; urgency=low
+
+  * Fix "FTBFS: URLError: <urlopen error [Errno -2] Name or service not
+    known>" by removing support for python-sphinxcontrib.issuetracker
+    (Closes: #649621)
+    - use debian/patches/disable_issuetracker.patch (thanks to Michael
+      Terry)
+    - debian/control: remove Build-Depends
+      python-sphinxcontrib.issuetracker
+
+ -- Jan Dittberner <jandd@debian.org>  Sat, 26 Nov 2011 14:27:30 +0100
+
+migrate (0.7.2-1) unstable; urgency=low
+
+  * New upstream release.
+  * debian/control:
+    - add python-sphinxcontrib.issuetracker to Build-Depends-Indep
+    - drop X-Python-Version
+    - bump python-sphinx build dependency to >= 1.0.7+dfsg~ (for
+      dh_sphinxdoc)
+    - bump python-sqlalchemy dependency to >= 0.6 (upstream support for
+      older version has been dropped)
+    - add libjs-sphinxdoc and ${sphinxdoc:Depends} to Depends
+    - remove libjs-jquery from Depends (added automatically by
+      dh_sphinxdoc)
+  * debian/rules:
+    - remove treatment for manage.py_tmpl (removed from upstream release)
+    - use dh_sphinxdoc
+    - remove manual sphinx doc installation
+  * add debian/patches/use-local-intersphinx.patch and
+    debian/patches/series to avoid fetching objects.inv from the web
+
+ -- Jan Dittberner <jandd@debian.org>  Wed, 02 Nov 2011 00:01:44 +0100
+
+migrate (0.7.1-2) unstable; urgency=low
+
+  * Fix "please update dependency on python-sqlalchemy", rebuild to fix
+    python-sqlalchemy dependency (Closes: #636900)
+
+ -- Jan Dittberner <jandd@debian.org>  Sat, 06 Aug 2011 22:12:49 +0200
+
+migrate (0.7.1-1) unstable; urgency=low
+
+  * New upstream release (better fix for column creation for columns with
+    foreign keys).
+
+ -- Jan Dittberner <jandd@debian.org>  Fri, 27 May 2011 23:05:06 +0200
+
+migrate (0.7-1) unstable; urgency=low
+
+  * New upstream release.
+  * add compatibility with SQLAlchemy 0.7
+  * debian/control: remove unneeded Breaks: ${python:Breaks}
+
+ -- Jan Dittberner <jandd@debian.org>  Fri, 27 May 2011 15:27:40 +0200
+
+migrate (0.6.1-3) unstable; urgency=low
+
+  * debian/rules: add --buildsystem=python_distutils, remove
+    override_dh_auto_build
+  * debian/control: bump Standards-Version to 3.9.2 (no changes needed)
+
+ -- Jan Dittberner <jandd@debian.org>  Wed, 25 May 2011 13:44:29 +0200
+
+migrate (0.6.1-1) unstable; urgency=low
+
+  * New upstream release.
+  * debian/control:
+    - remove dependency on python-support
+    - bump python dependency version to 2.6.5~
+    - drop XS-Python-Version, add X-Python-Version
+    - add Breaks: ${python:Breaks}
+  * debian/rules:
+    - add --with python2 to dh call
+  * remove debian/patches/use-absolute-imports-of-exception-
+    classes.patch that has been applied upstream
+
+ -- Jan Dittberner <jandd@debian.org>  Fri, 11 Feb 2011 22:44:42 +0100
+
+migrate (0.6-5) unstable; urgency=low
+
+  * upload to unstable
+
+ -- Jan Dittberner <jandd@debian.org>  Sun, 06 Feb 2011 14:48:44 +0100
+
+migrate (0.6-5~exp1) experimental; urgency=low
+
+  * Fix "objects.inv should not be compressed" exclude objects.inv from
+    dh_compress in debian/rules, thanks for the report to Michael Fladischer
+    (Closes: #608747)
+  * Fix "AttributeError: 'module' object has no attribute
+    'MigrateDeprecationWarning'" include patch
+    debian/patches/use-absolute-imports-of-exception-classes.patch by Etienne
+    Millon (Closes: #609259)
+
+ -- Jan Dittberner <jandd@debian.org>  Sun, 09 Jan 2011 16:02:32 +0100
+
+migrate (0.6-4) unstable; urgency=low
+
+  * debian/control:
+    - remove dependency on python-codespeak-lib (Closes: #592102)
+    - remove build dependency on python-codespeak-lib
+    - add build dependency on python-tempita (>= 0.4)
+    - bump Standards-Version to 3.9.1 (no changes needed)
+
+ -- Jan Dittberner <jandd@debian.org>  Sat, 07 Aug 2010 18:33:18 +0200
+
+migrate (0.6-3) unstable; urgency=low
+
+  * Fix "migrate gives ImportError if tempita is not installed" by adding
+    missing dependency on python-tempita (>= 0.4) to debian/control (Closes:
+    #589990)
+
+ -- Jan Dittberner <jandd@debian.org>  Thu, 22 Jul 2010 23:10:32 +0200
+
+migrate (0.6-2) unstable; urgency=low
+
+  * Upload to unstable.
+
+ -- Jan Dittberner <jandd@debian.org>  Mon, 12 Jul 2010 00:24:57 +0200
+
+migrate (0.6-1) experimental; urgency=low
+
+  * New upstream version.
+
+ -- Jan Dittberner <jandd@debian.org>  Sun, 11 Jul 2010 21:22:25 +0200
+
+migrate (0.6~hg221-1) experimental; urgency=low
+
+  * New upstream pre-release version.
+    - add SQLAlchemy 0.6 compatibility
+  * debian/source/format:
+    - set format to 3.0 (quilt)
+  * debian/control:
+    - bump Standards-Version to 3.9.0 (no changes needed)
+    - remove quilt dependency
+    - change debhelper dependency to 7.0.50~
+  * debian/rules:
+    - install docs/changelog.rst instead of CHANGELOG
+    - remove explicit patching
+
+ -- Jan Dittberner <jandd@debian.org>  Sun, 04 Jul 2010 14:32:13 +0200
+
+migrate (0.5.4-3) unstable; urgency=low
+
+  * switch to dh7
+  * debian/control:
+    - Build-Depends: increase minimum debhelper version to 7.0.50
+    - add ${misc:Depends} to python-migrate's Depends
+    - remove XB-Python-Version
+  * add debian/install.tmpl:
+    - used as base for generating debian/install
+  * debian/compat:
+    - 5 -> 7
+  * debian/rules:
+    - change handling of .egg-info (Closes: #552921)
+    - move all customizations to override_dh_* rules
+    - generate debian/install to install template files
+
+ -- Jan Dittberner <jandd@debian.org>  Thu, 29 Oct 2009 12:40:14 +0100
+
+migrate (0.5.4-2) unstable; urgency=low
+
+  * debian/control:
+    - use Debian email address
+    - bump Standards-Version to 3.8.3 (no changes needed)
+    - add quilt to Build-Depends
+    - add python-decorator to Build-Depends indep to fix documentation build
+  * debian/copyright:
+    - add Domen Kožar to upstream authors
+    - update upstream URL
+    - use Debian email address
+  * add debian/patches/keep_empty_modules.patch to prevent python-
+    support from deleting the required empty __init__.py files in the
+    templates module (Closes: #549488)
+  * add debian/README.source to document quilt usage
+  * debian/rules: add quilt macros
+
+ -- Jan Dittberner <jandd@debian.org>  Sat, 03 Oct 2009 21:37:20 +0200
+
+migrate (0.5.4-1) unstable; urgency=low
+
+  * New upstream version
+  * debian/control: add python-decorator dependency
+
+ -- Jan Dittberner <jan@dittberner.info>  Sun, 07 Jun 2009 15:50:29 +0200
+
+migrate (0.5.3-1) unstable; urgency=low
+
+  * New upstream version
+  * don't compress .js files to make search in html docs possible
+  * switch to python-support
+  * debian/copyright: update copyright years of upstream and Debian
+    packaging
+  * debian/control:
+    - update Standards-Version to 3.8.1 (no changes needed)
+    - build depend on python-sphinx >= 0.6.1
+    - build depends on python (>= 2.5.4-1~), drop python-all-dev
+      dependency, no need to build for all versions
+    - remove python-central dependency
+    - add python-sqlalchemy to build-depends-indep to allow the build
+      of complete API docs
+    - make python-migrate depend on libjs-jquery instead of
+      python-sphinx at installation time
+  * debian/rules:
+    - add --no-compile --install-layout=deb
+    - use py_libdir macro from python.mk instead of hardcoded paths
+    - only build for default Python version
+    - link to jquery.js from libjs-jquery
+
+ -- Jan Dittberner <jan@dittberner.info>  Fri, 10 Apr 2009 18:01:29 +0200
+
+migrate (0.5.2-1) unstable; urgency=low
+
+  * New upstream version
+  * debian/rules: adapt to upstream changes (rename .static to _static
+    when building docs)
+
+ -- Jan Dittberner <jan@dittberner.info>  Wed, 18 Feb 2009 22:54:31 +0100
+
+migrate (0.5.1.2-1) experimental; urgency=low
+
+  * New upstream version
+  * remove debian/patches/disable_py.dpatch because py is not used by
+    upstream anymore
+  * remove unused debian/patches/00dpatch.conf and debian/patches/00list
+  * debian/rules:
+    - remove dpatch support because it's not needed
+    - build sphinx documentation in html
+    - don't compress .rst files
+  * debian/dirs:
+    - remove docs suffix from /usr/share/doc/python-migrate
+  * debian/control:
+    - remove dpatch from Build-Depends
+    - remove python-docutils from Build-Depends-Indep
+    - add python-sphinx to Build-Depends-Indep and Depends
+    - bump python-sqlalchemy's minimum required version
+  * add debian/migrate-repository repository migration script
+  * add debian/migrate-repository.1 man page for migrate-repository
+  * remove debian/README.source because of dpatch removal
+
+ -- Jan Dittberner <jan@dittberner.info>  Sat, 07 Feb 2009 23:13:31 +0100
+
+migrate (0.4.5-2) unstable; urgency=low
+
+  [ Sandro Tosi ]
+  * debian/control
+    - switch Vcs-Browser field to viewsvn
+
+  [ Jan Dittberner ]
+  * debian/control
+    - improved description
+    - depend on SQLAlchemy << 0.5~
+
+ -- Jan Dittberner <jan@dittberner.info>  Fri, 09 Jan 2009 23:35:11 +0100
+
+migrate (0.4.5-1) unstable; urgency=low
+
+  * New upstream version
+  * debian/control
+    + updated Standards-Version to 3.8.0
+    + add python-codespeak-lib to Depends to avoid pkg_resources warnings
+  * debian/README.source file added
+
+ -- Jan Dittberner <jan@dittberner.info>  Wed, 23 Jul 2008 22:12:53 +0200
+
+migrate (0.4.4-1) unstable; urgency=low
+
+  * New upstream release
+
+ -- Jan Dittberner <jan@dittberner.info>  Fri, 04 Apr 2008 23:12:39 +0200
+
+migrate (0.4.3-1) unstable; urgency=low
+
+  * New upstream release
+  * doc-base Section changed to Programming/Python
+
+ -- Jan Dittberner <jan@dittberner.info>  Fri, 28 Mar 2008 20:10:27 +0100
+
+migrate (0.4.2-2) unstable; urgency=low
+
+  * Change Depends: in debian/control to use python-pkg-resources at
+    runtime instead of python-setuptools (Closes: #468723)
+
+ -- Jan Dittberner <jan@dittberner.info>  Sun, 02 Mar 2008 21:16:42 +0100
+
+migrate (0.4.2-1) unstable; urgency=medium
+
+  [ Jan Dittberner ]
+  * New upstream release
+  * debian/watch changed due to renamed upstream source archive
+  * changed debian/rules to use the new .egg-info name
+
+  [ Piotr Ożarowski ]
+  * Add disable_py patch to prevent downloading "Py" Egg
+    + python-codespeak-lib and dpatch added to Build-Depends
+  * remove usr/lib *after* calling dh_pycentral
+  * Install ez_install free (i.e. working) /usr/bin/migrate script
+
+ -- Jan Dittberner <jan@dittberner.info>  Tue, 19 Feb 2008 19:45:35 +0100
+
+migrate (0.4.1-1) unstable; urgency=medium
+
+  * New upstream release (Closes: #464413)
+  * incorporate upstream copyright changes
+  * add Homepage, Vcs-Browser and Vcs-Svn fields to debian/control
+  * don't depend on fixed revision numbers
+  * update policy version to 3.7.3
+  * depend on python-sqlalchemy (>= 0.3.10)
+  * add Debian Python Modules Team to Uploaders
+  * use default Python version in /usr/bin/migrate's hashbang
+  * add python-setuptools to Depends
+
+ -- Jan Dittberner <jan@dittberner.info>  Sat, 16 Feb 2008 12:38:56 +0100
+
+migrate (0.2.2-1) unstable; urgency=low
+
+  * Initial release (Closes: #400570)
+
+ -- Jan Dittberner <jan@dittberner.info>  Mon, 25 Dec 2006 13:50:22 +0100
+

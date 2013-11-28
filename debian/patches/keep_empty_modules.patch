@@ -1,0 +1,21 @@
+Add comments to the empty __init__.py files to keep python-support from removing them
+--- /dev/null
++++ b/migrate/versioning/templates/__init__.py
+@@ -0,0 +1 @@
++# template module
+--- /dev/null
++++ b/migrate/versioning/templates/repository/__init__.py
+@@ -0,0 +1 @@
++# template repository module
+--- /dev/null
++++ b/migrate/versioning/templates/repository/default/__init__.py
+@@ -0,0 +1 @@
++# template repository default module
+--- /dev/null
++++ b/migrate/versioning/templates/repository/default/versions/__init__.py
+@@ -0,0 +1 @@
++# template repository default versions module
+--- /dev/null
++++ b/migrate/versioning/templates/script/__init__.py
+@@ -0,0 +1 @@
++# templates script module

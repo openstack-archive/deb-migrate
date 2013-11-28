@@ -1,0 +1,9 @@
+Document: python-migrate
+Title: Python migrate documentation
+Author: Evan Rosson, Jan Dittberner
+Abstract: Python migrate brings database schema migration for SQLAlchemy
+Section: Programming/Python
+
+Format: HTML
+Index: /usr/share/doc/python-migrate/html/index.html
+Files: /usr/share/doc/python-migrate/html/*.html

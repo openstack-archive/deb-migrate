@@ -1,0 +1,37 @@
+#!/usr/bin/make -f
+
+UPSTREAM_GIT = git://github.com/stackforge/sqlalchemy-migrate.git
+-include /usr/share/openstack-pkg-tools/pkgos.make
+
+include /usr/share/python/python.mk
+
+DEB_UPSTREAM_VERSION=$(shell dpkg-parsechangelog \
+	| sed -rne 's,^Version: ([^-]+).*,\1,p')
+DOCS=$(shell find docs/ -name "*.rst" -printf "%p ")
+PYLIBDIR=$(call py_libdir,$(shell pyversions -d))
+
+%:
+	dh $@ --with python2,sphinxdoc --buildsystem=python_distutils
+
+override_dh_auto_clean:
+	rm -rf dist build
+	find . -name '*\.py[co]' -exec rm {} \;
+	rm -f docs/reference.txt debian/install
+
+override_dh_auto_install:
+	# install documentation
+	PYTHONPATH=$(CURDIR) sphinx-build -b html -a -E -N \
+	  doc/source \
+	  debian/python-migrate/usr/share/doc/python-migrate/html/
+	cp debian/install.tmpl debian/install
+	find migrate/versioning/templates -type f ! -name '*.py' | \
+	while read name; do \
+		echo "$$name $(PYLIBDIR)/`dirname $$name`" >> debian/install; \
+	done
+	dh_auto_install
+
+override_dh_installchangelogs:
+	dh_installchangelogs -i doc/source/changelog.rst
+
+override_dh_compress:
+	dh_compress -i -X.py -X.rst -X.js -Xobjects.inv

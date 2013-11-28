@@ -1,0 +1,14 @@
+Subject: use local objects.inv for intersphinx configuration
+Author: Jan Dittberner <jandd@debian.org>
+--- a/doc/source/conf.py
++++ b/doc/source/conf.py
+@@ -32,8 +32,7 @@
+ 
+ # link to sqlalchemy docs
+ intersphinx_mapping = {
+-    'sqlalchemy': ('http://www.sqlalchemy.org/docs/', None),
+-    'python': ('http://docs.python.org/2.7', None)}
++    'sqlalchemy': ('http://www.sqlalchemy.org/docs/', '/usr/share/doc/python-sphinx/html/objects.inv')}
+ 
+ # Add any paths that contain templates here, relative to this directory.
+ templates_path = ['_templates']

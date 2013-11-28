@@ -1,0 +1,47 @@
+Source: migrate
+Section: python
+Priority: optional
+Maintainer: PKG OpenStack <openstack-devel@lists.alioth.debian.org>
+Uploaders: Julien Danjou <acid@debian.org>, 
+           Thomas Goirand <zigo@debian.org>,  
+           Mehdi Abaakouk <sileht@sileht.net>,
+           Jan Dittberner <jandd@debian.org>
+Build-Depends: debhelper (>= 9),
+               python (>= 2.6.5~),
+               python-pbr,
+               python-decorator,
+               python-setuptools (>= 0.6b3),
+               python-sphinx (>= 1.0.7+dfsg) | python3-sphinx,
+               python-sqlalchemy,
+               python-tempita (>= 0.4)
+Standards-Version: 3.9.4
+Homepage: https://github.com/stackforge/sqlalchemy-migrate
+Vcs-Git: git://anonscm.debian.org/openstack/migrate.git
+Vcs-Browser: http://anonscm.debian.org/gitweb/?p=openstack/migrate.git;a=summary
+
+Package: python-migrate
+Architecture: all
+Pre-Depends: dpkg (>= 1.15.6~)
+Depends: libjs-sphinxdoc,
+         python-pbr,
+         python-decorator,
+         python-pkg-resources,
+         python-sqlalchemy (>= 0.8),
+         python-tempita (>= 0.4),
+         ${misc:Depends},
+         ${python:Depends},
+         ${sphinxdoc:Depends}
+Description: Database schema migration for SQLAlchemy
+ Inspired by Ruby on Rails' migrations, migrate provides a way to deal
+ with database schema changes in SQLAlchemy projects.
+ .
+ SQLAlchemy-migrate is build on top of SQLAlchemy and provides a changeset
+ and a versioning API for database schemas as well as a script utilizing
+ these APIs. The database change sets are managed in a file based
+ repository allowing upgrades and downgrades of database schema versions.
+ The change sets may consist of Python code facilitating the changeset API
+ or SQL scripts.
+ .
+ SQLAlchemy-migrate has support for MySQL, PostgreSQL, SQLite and Oracle
+ databases. The support for Oracle is not as well tested as the support for
+ the other database systems.
