@@ -3,6 +3,8 @@
 UPSTREAM_GIT = git://github.com/stackforge/sqlalchemy-migrate.git
 -include /usr/share/openstack-pkg-tools/pkgos.make
 
+export OSLO_PACKAGE_VERSION=$(VERSION)
+
 include /usr/share/python/python.mk
 
 DEB_UPSTREAM_VERSION=$(shell dpkg-parsechangelog \
