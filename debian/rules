@@ -37,3 +37,8 @@ override_dh_installchangelogs:
 
 override_dh_compress:
 	dh_compress -i -X.py -X.rst -X.js -Xobjects.inv
+
+ifeq (,$(findstring nocheck, $(DEB_BUILD_OPTIONS)))
+override_dh_auto_test:
+	python setup.py testr --slowest --testr-args='--subunit  ' || true
+endif

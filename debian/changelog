@@ -19,6 +19,8 @@ migrate (0.8.2-1) unstable; urgency=low
   * Changed path of docs/changelog.rst to doc/source/ in debian/rules.
   * Fix section break in debian/copyright.
   * Added Pre-Depends: dpkg (>= 1.15.6~), because of xz compression.
+  * Added a number of build-dependencies from test-requirements.txt.
+  * Now run tests at build time.
 
  -- Thomas Goirand <zigo@debian.org>  Thu, 28 Nov 2013 12:57:24 +0800
 
