@@ -40,5 +40,5 @@ override_dh_compress:
 
 ifeq (,$(findstring nocheck, $(DEB_BUILD_OPTIONS)))
 override_dh_auto_test:
-	python setup.py testr --slowest --testr-args='--subunit  ' || true
+	python setup.py testr --slowest || true
 endif
