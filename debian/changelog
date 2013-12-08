@@ -1,3 +1,10 @@
+migrate (0.8.2-2) unstable; urgency=medium
+
+  * Removes python3-sphinx as build-depends, to avoid triggers of import
+    warnings (Closes: #681073).
+
+ -- Thomas Goirand <zigo@debian.org>  Sun, 08 Dec 2013 14:01:14 +0800
+
 migrate (0.8.2-1) unstable; urgency=low
 
   * New upstream release:
