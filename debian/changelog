@@ -2,6 +2,8 @@ migrate (0.8.2-3) unstable; urgency=medium
 
   * Do not depend on python-sqlite which is in the Python standard library
     (Closes: #732795).
+  * Adds export OSLO_PACKAGE_VERSION=$(VERSION) in rules to avoid FTBFS when
+    building without git-buildpackage (Closes: #732794).
 
  -- Thomas Goirand <zigo@debian.org>  Sun, 22 Dec 2013 14:54:09 +0800
 
