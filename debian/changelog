@@ -1,3 +1,10 @@
+migrate (0.8.2-3) unstable; urgency=medium
+
+  * Do not depend on python-sqlite which is in the Python standard library
+    (Closes: #732795).
+
+ -- Thomas Goirand <zigo@debian.org>  Sun, 22 Dec 2013 14:54:09 +0800
+
 migrate (0.8.2-2) unstable; urgency=medium
 
   * Removes python3-sphinx as build-depends, to avoid triggers of import
