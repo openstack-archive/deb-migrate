@@ -1,3 +1,11 @@
+migrate (0.8.2-4) unstable; urgency=medium
+
+  * Added missing openstack-pkg-tools build-depends, needed for the
+    export OSLO_PACKAGE_VERSION=$(VERSION) (otherwise, VERSION doesn't have any
+    value). This should be fixing FTBFS. (Closes: #738422)
+
+ -- Thomas Goirand <zigo@debian.org>  Mon, 10 Feb 2014 23:55:16 +0800
+
 migrate (0.8.2-3) unstable; urgency=medium
 
   * Do not depend on python-sqlite which is in the Python standard library
