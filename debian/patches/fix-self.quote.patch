@@ -1,0 +1,40 @@
+Description: Fix SADeprecationWarning: Use ``<obj>.name.quote``
+ SQLAlchemy 0.9 deprecates using <obj>.quote in the favor of <obj>.name.quote.
+ This patch does exactly this change.
+Author: Thomas Goirand <zigo@debian.org>
+Forwarded: no
+Last-Update: 2014-02-24
+
+--- a/migrate/changeset/schema.py
++++ b/migrate/changeset/schema.py
+@@ -605,7 +605,7 @@ populated with defaults
+             key=self.key,
+             primary_key=self.primary_key,
+             nullable=self.nullable,
+-            quote=self.quote,
++            quote=self.name.quote,
+             index=self.index,
+             unique=self.unique,
+             onupdate=self.onupdate,
+--- a/migrate/changeset/databases/mysql.py
++++ b/migrate/changeset/databases/mysql.py
+@@ -34,7 +34,7 @@ class MySQLSchemaChanger(MySQLSchemaGene
+                 first = primary_keys.pop(0)
+                 if first.name == delta.current_name:
+                     colspec += " AUTO_INCREMENT"
+-        old_col_name = self.preparer.quote(delta.current_name, table.quote)
++        old_col_name = self.preparer.quote(delta.current_name, table.name.quote)
+ 
+         self.start_alter_table(table)
+ 
+--- a/migrate/changeset/ansisql.py
++++ b/migrate/changeset/ansisql.py
+@@ -158,7 +158,7 @@ class ANSISchemaChanger(AlterTableVisito
+         """Rename a table. Other ops aren't supported."""
+         self.start_alter_table(table)
+         self.append("RENAME TO %s" % self.preparer.quote(table.new_name,
+-                                                         table.quote))
++                                                         table.name.quote))
+         self.execute()
+ 
+     def visit_index(self, index):

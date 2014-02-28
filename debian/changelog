@@ -1,3 +1,17 @@
+migrate (0.8.2-5) unstable; urgency=medium
+
+  * Added patch gathering all upstream commits from git, up to
+    20130223+git21fcdad0f4. This version is still called "0.8.2" because
+    distribute doesn't like anything smarter (how lame...).
+  * Added fix for deprecation.
+  * Now build-depends on python-testtools (>= 0.9.35).
+  * Added PYTHONPATH=. when running tests.
+  * Added upstream SQLA 9 patch.
+  * Added MySQL tests capability in the unit tests.
+  * Adds a couple of SQLA 9 homebrewed patches.
+
+ -- Thomas Goirand <zigo@debian.org>  Mon, 24 Feb 2014 04:46:37 +0000
+
 migrate (0.8.2-4) unstable; urgency=medium
 
   * Added missing openstack-pkg-tools build-depends, needed for the

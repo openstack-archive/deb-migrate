@@ -1,0 +1,648 @@
+Description: Adds all latest commits from Git
+Author: Thomas Goirand <zigo@debian.org>
+Origin: Upstream
+Last-Update: 2014-03-01
+
+diff --git a/README.rst b/README.rst
+index daecfca..192cc5a 100644
+--- a/README.rst
++++ b/README.rst
+@@ -30,7 +30,7 @@ Homepage is located at `stackforge
+ <http://github.com/stackforge/sqlalchemy-migrate/>`_
+ 
+ You can also clone a current `development version
+-<http://github.com/stackforge/sqlalchmey-migrate>`_
++<http://github.com/stackforge/sqlalchemy-migrate>`_
+ 
+ Tests and Bugs
+ --------------
+diff --git a/migrate/changeset/databases/__init__.py b/migrate/changeset/databases/__init__.py
+index 8546918..075a787 100644
+--- a/migrate/changeset/databases/__init__.py
++++ b/migrate/changeset/databases/__init__.py
+@@ -7,4 +7,5 @@ __all__ = [
+     'sqlite',
+     'mysql',
+     'oracle',
++    'ibmdb2',
+ ]
+diff --git a/migrate/changeset/databases/ibmdb2.py b/migrate/changeset/databases/ibmdb2.py
+new file mode 100644
+index 0000000..1b995ab
+--- /dev/null
++++ b/migrate/changeset/databases/ibmdb2.py
+@@ -0,0 +1,313 @@
++"""
++    DB2 database specific implementations of changeset classes.
++"""
++
++import logging
++
++from ibm_db_sa import base
++from sqlalchemy.schema import (AddConstraint,
++                               CreateIndex,
++                               DropConstraint)
++from sqlalchemy.schema import (Index,
++                               PrimaryKeyConstraint,
++                               UniqueConstraint)
++
++from migrate.changeset import ansisql
++from migrate.changeset import constraint
++from migrate import exceptions
++
++
++LOG = logging.getLogger(__name__)
++
++IBMDBSchemaGenerator = base.IBM_DBDDLCompiler
++
++
++def get_server_version_info(dialect):
++    """Returns the DB2 server major and minor version as a list of ints."""
++    return [int(ver_token) for ver_token in dialect.dbms_ver.split('.')[0:2]]
++
++
++def is_unique_constraint_with_null_columns_supported(dialect):
++    """Checks to see if the DB2 version is at least 10.5.
++
++    This is needed for checking if unique constraints with null columns
++    are supported.
++    """
++    return get_server_version_info(dialect) >= [10, 5]
++
++
++class IBMDBColumnGenerator(IBMDBSchemaGenerator,
++                           ansisql.ANSIColumnGenerator):
++    def visit_column(self, column):
++        nullable = True
++        if not column.nullable:
++            nullable = False
++            column.nullable = True
++
++        table = self.start_alter_table(column)
++        self.append("ADD COLUMN ")
++        self.append(self.get_column_specification(column))
++
++        for cons in column.constraints:
++            self.traverse_single(cons)
++        if column.default is not None:
++            self.traverse_single(column.default)
++        self.execute()
++
++        #ALTER TABLE STATEMENTS
++        if not nullable:
++            self.start_alter_table(column)
++            self.append("ALTER COLUMN %s SET NOT NULL" %
++                        self.preparer.format_column(column))
++            self.execute()
++            self.append("CALL SYSPROC.ADMIN_CMD('REORG TABLE %s')" %
++                        self.preparer.format_table(table))
++            self.execute()
++
++        # add indexes and unique constraints
++        if column.index_name:
++            Index(column.index_name, column).create()
++        elif column.unique_name:
++            constraint.UniqueConstraint(column,
++                                        name=column.unique_name).create()
++
++        # SA bounds FK constraints to table, add manually
++        for fk in column.foreign_keys:
++            self.add_foreignkey(fk.constraint)
++
++        # add primary key constraint if needed
++        if column.primary_key_name:
++            pk = constraint.PrimaryKeyConstraint(
++                column, name=column.primary_key_name)
++            pk.create()
++
++        self.append("COMMIT")
++        self.execute()
++        self.append("CALL SYSPROC.ADMIN_CMD('REORG TABLE %s')" %
++                    self.preparer.format_table(table))
++        self.execute()
++
++
++class IBMDBColumnDropper(ansisql.ANSIColumnDropper):
++    def visit_column(self, column):
++        """Drop a column from its table.
++
++        :param column: the column object
++        :type column: :class:`sqlalchemy.Column`
++        """
++        #table = self.start_alter_table(column)
++        super(IBMDBColumnDropper, self).visit_column(column)
++        self.append("CALL SYSPROC.ADMIN_CMD('REORG TABLE %s')" %
++                    self.preparer.format_table(column.table))
++        self.execute()
++
++
++class IBMDBSchemaChanger(IBMDBSchemaGenerator, ansisql.ANSISchemaChanger):
++    def visit_table(self, table):
++        """Rename a table; #38. Other ops aren't supported."""
++
++        self._rename_table(table)
++        self.append("TO %s" % self.preparer.quote(table.new_name, table.quote))
++        self.execute()
++        self.append("COMMIT")
++        self.execute()
++
++    def _rename_table(self, table):
++        self.append("RENAME TABLE %s " % self.preparer.format_table(table))
++
++    def visit_index(self, index):
++        old_name = self.preparer.quote(self._index_identifier(index.name),
++                                       index.quote)
++        new_name = self.preparer.quote(self._index_identifier(index.new_name),
++                                       index.quote)
++        self.append("RENAME INDEX %s TO %s" % (old_name, new_name))
++        self.execute()
++        self.append("COMMIT")
++        self.execute()
++
++    def _run_subvisit(self, delta, func, start_alter=True):
++        """Runs visit method based on what needs to be changed on column"""
++        table = delta.table
++        if start_alter:
++            self.start_alter_table(table)
++        ret = func(table,
++                   self.preparer.quote(delta.current_name, delta.quote),
++                   delta)
++        self.execute()
++        self._reorg_table(self.preparer.format_table(delta.table))
++
++    def _reorg_table(self, delta):
++        self.append("CALL SYSPROC.ADMIN_CMD('REORG TABLE %s')" % delta)
++        self.execute()
++
++    def visit_column(self, delta):
++        keys = delta.keys()
++        tr = self.connection.begin()
++        column = delta.result_column.copy()
++
++        if 'type' in keys:
++            try:
++                self._run_subvisit(delta, self._visit_column_change, False)
++            except Exception as e:
++                LOG.warn("Unable to change the column type. Error: %s" % e)
++
++            if column.primary_key and 'primary_key' not in keys:
++                try:
++                    self._run_subvisit(delta, self._visit_primary_key)
++                except Exception as e:
++                    LOG.warn("Unable to add primary key. Error: %s" % e)
++
++        if 'nullable' in keys:
++            self._run_subvisit(delta, self._visit_column_nullable)
++
++        if 'server_default' in keys:
++            self._run_subvisit(delta, self._visit_column_default)
++
++        if 'primary_key' in keys:
++            self._run_subvisit(delta, self._visit_primary_key)
++            self._run_subvisit(delta, self._visit_unique_constraint)
++
++        if 'name' in keys:
++            try:
++                self._run_subvisit(delta, self._visit_column_name, False)
++            except Exception as e:
++                LOG.warn("Unable to change column %(name)s. Error: %(error)s" %
++                         {'name': delta.current_name, 'error': e})
++
++        self._reorg_table(self.preparer.format_table(delta.table))
++        self.append("COMMIT")
++        self.execute()
++        tr.commit()
++
++    def _visit_unique_constraint(self, table, col_name, delta):
++        # Add primary key to the current column
++        self.append("ADD CONSTRAINT %s " % col_name)
++        self.append("UNIQUE (%s)" % col_name)
++
++    def _visit_primary_key(self, table, col_name, delta):
++        # Add primary key to the current column
++        self.append("ADD PRIMARY KEY (%s)" % col_name)
++
++    def _visit_column_name(self, table, col_name, delta):
++        column = delta.result_column.copy()
++
++        # Delete the primary key before renaming the column
++        if column.primary_key:
++            try:
++                self.start_alter_table(table)
++                self.append("DROP PRIMARY KEY")
++                self.execute()
++            except Exception:
++                LOG.debug("Continue since Primary key does not exist.")
++
++        self.start_alter_table(table)
++        new_name = self.preparer.format_column(delta.result_column)
++        self.append("RENAME COLUMN %s TO %s" % (col_name, new_name))
++
++        if column.primary_key:
++            # execute the rename before adding primary key back
++            self.execute()
++            self.start_alter_table(table)
++            self.append("ADD PRIMARY KEY (%s)" % new_name)
++
++    def _visit_column_nullable(self, table, col_name, delta):
++        self.append("ALTER COLUMN %s " % col_name)
++        nullable = delta['nullable']
++        if nullable:
++            self.append("DROP NOT NULL")
++        else:
++            self.append("SET NOT NULL")
++
++    def _visit_column_default(self, table, col_name, delta):
++        default_text = self.get_column_default_string(delta.result_column)
++        self.append("ALTER COLUMN %s " % col_name)
++        if default_text is None:
++            self.append("DROP DEFAULT")
++        else:
++            self.append("SET WITH DEFAULT %s" % default_text)
++
++    def _visit_column_change(self, table, col_name, delta):
++        column = delta.result_column.copy()
++
++        # Delete the primary key before
++        if column.primary_key:
++            try:
++                self.start_alter_table(table)
++                self.append("DROP PRIMARY KEY")
++                self.execute()
++            except Exception:
++                LOG.debug("Continue since Primary key does not exist.")
++            # Delete the identity before
++            try:
++                self.start_alter_table(table)
++                self.append("ALTER COLUMN %s DROP IDENTITY" % col_name)
++                self.execute()
++            except Exception:
++                LOG.debug("Continue since identity does not exist.")
++
++        column.default = None
++        if not column.table:
++            column.table = delta.table
++        self.start_alter_table(table)
++        self.append("ALTER COLUMN %s " % col_name)
++        self.append("SET DATA TYPE ")
++        type_text = self.dialect.type_compiler.process(
++            delta.result_column.type)
++        self.append(type_text)
++
++
++class IBMDBConstraintGenerator(ansisql.ANSIConstraintGenerator):
++    def _visit_constraint(self, constraint):
++        constraint.name = self.get_constraint_name(constraint)
++        if (isinstance(constraint, UniqueConstraint) and
++                is_unique_constraint_with_null_columns_supported(
++                    self.dialect)):
++            for column in constraint.columns._all_cols:
++                if column.nullable:
++                    constraint.exclude_nulls = True
++                    break
++        if getattr(constraint, 'exclude_nulls', None):
++            index = Index(constraint.name,
++                          *(column for column in constraint.columns._all_cols),
++                          unique=True)
++            sql = self.process(CreateIndex(index))
++            sql += ' EXCLUDE NULL KEYS'
++        else:
++            sql = self.process(AddConstraint(constraint))
++        self.append(sql)
++        self.execute()
++
++
++class IBMDBConstraintDropper(ansisql.ANSIConstraintDropper,
++                             ansisql.ANSIConstraintCommon):
++    def _visit_constraint(self, constraint):
++        constraint.name = self.get_constraint_name(constraint)
++        if (isinstance(constraint, UniqueConstraint) and
++                is_unique_constraint_with_null_columns_supported(
++                    self.dialect)):
++            for column in constraint.columns._all_cols:
++                if column.nullable:
++                    constraint.exclude_nulls = True
++                    break
++        if getattr(constraint, 'exclude_nulls', None):
++            index_name = self.preparer.quote(
++                self._index_identifier(constraint.name), constraint.quote)
++            sql = 'DROP INDEX %s ' % index_name
++        else:
++            sql = self.process(DropConstraint(constraint,
++                                              cascade=constraint.cascade))
++        self.append(sql)
++        self.execute()
++
++    def visit_migrate_primary_key_constraint(self, constraint):
++        self.start_alter_table(constraint.table)
++        self.append("DROP PRIMARY KEY")
++        self.execute()
++
++
++class IBMDBDialect(ansisql.ANSIDialect):
++    columngenerator = IBMDBColumnGenerator
++    columndropper = IBMDBColumnDropper
++    schemachanger = IBMDBSchemaChanger
++    constraintgenerator = IBMDBConstraintGenerator
++    constraintdropper = IBMDBConstraintDropper
+diff --git a/migrate/changeset/databases/visitor.py b/migrate/changeset/databases/visitor.py
+index 228b4d3..224c40f 100644
+--- a/migrate/changeset/databases/visitor.py
++++ b/migrate/changeset/databases/visitor.py
+@@ -8,7 +8,8 @@ from migrate.changeset.databases import (sqlite,
+                                          postgres,
+                                          mysql,
+                                          oracle,
+-                                         firebird)
++                                         firebird,
++                                         ibmdb2)
+ 
+ 
+ # Map SA dialects to the corresponding Migrate extensions
+@@ -20,6 +21,7 @@ DIALECTS = {
+     "mysql": mysql.MySQLDialect,
+     "oracle": oracle.OracleDialect,
+     "firebird": firebird.FBDialect,
++    "ibm_db_sa": ibmdb2.IBMDBDialect
+ }
+ 
+ 
+diff --git a/migrate/tests/changeset/databases/__init__.py b/migrate/tests/changeset/databases/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/migrate/tests/changeset/databases/test_ibmdb2.py b/migrate/tests/changeset/databases/test_ibmdb2.py
+new file mode 100644
+index 0000000..4b3f983
+--- /dev/null
++++ b/migrate/tests/changeset/databases/test_ibmdb2.py
+@@ -0,0 +1,32 @@
++#!/usr/bin/env python
++# -*- coding: utf-8 -*-
++
++import mock
++
++import six
++
++from migrate.changeset.databases import ibmdb2
++from migrate.tests import fixture
++
++
++class TestIBMDBDialect(fixture.Base):
++    """
++    Test class for ibmdb2 dialect unit tests which do not require
++    a live backend database connection.
++    """
++
++    def test_is_unique_constraint_with_null_cols_supported(self):
++        test_values = {
++            '10.1': False,
++            '10.4.99': False,
++            '10.5': True,
++            '10.5.1': True
++        }
++        for version, supported in six.iteritems(test_values):
++            mock_dialect = mock.MagicMock()
++            mock_dialect.dbms_ver = version
++            self.assertEqual(
++                supported,
++                ibmdb2.is_unique_constraint_with_null_columns_supported(
++                    mock_dialect),
++                'Assertion failed on version: %s' % version)
+diff --git a/migrate/tests/changeset/test_changeset.py b/migrate/tests/changeset/test_changeset.py
+index bd7f034..8b4a6be 100644
+--- a/migrate/tests/changeset/test_changeset.py
++++ b/migrate/tests/changeset/test_changeset.py
+@@ -231,18 +231,18 @@ class TestAddDropColumn(fixture.DB):
+ 
+         col.drop()
+ 
+-    @fixture.usedb(not_supported='mysql')
++    @fixture.usedb(not_supported=['mysql'])
+     def test_check(self):
+         """Can create columns with check constraint"""
+-        col = Column('data',
++        col = Column('foo',
+                      Integer,
+-                     sqlalchemy.schema.CheckConstraint('data > 4'))
++                     sqlalchemy.schema.CheckConstraint('foo > 4'))
+         col.create(self.table)
+ 
+         # check if constraint was added (cannot test on objects)
+-        self.table.insert(values={'data': 5}).execute()
++        self.table.insert(values={'foo': 5}).execute()
+         try:
+-            self.table.insert(values={'data': 3}).execute()
++            self.table.insert(values={'foo': 3}).execute()
+         except (sqlalchemy.exc.IntegrityError,
+                 sqlalchemy.exc.ProgrammingError):
+             pass
+@@ -272,10 +272,11 @@ class TestAddDropColumn(fixture.DB):
+         col.drop(self.table)
+ 
+ # TODO: remove already attached columns with uniques, pks, fks ..
+-    @fixture.usedb(not_supported='postgresql')
++    @fixture.usedb(not_supported=['ibm_db_sa', 'postgresql'])
+     def test_drop_column_of_composite_index(self):
+         # NOTE(rpodolyaka): postgresql automatically drops a composite index
+         #                   if one of its columns is dropped
++        # NOTE(mriedem): DB2 does the same.
+         self.table_idx.c.b.drop()
+ 
+         reflected = Table(self.table_idx.name, MetaData(), autoload=True,
+@@ -441,7 +442,7 @@ class TestAddDropColumn(fixture.DB):
+         # check remaining foreign key is there
+         self.assertEqual([['r1']],
+                          self._actual_foreign_keys())
+-        
++
+     @fixture.usedb()
+     def test_drop_with_complex_foreign_keys(self):
+         from sqlalchemy.schema import ForeignKeyConstraint
+@@ -449,11 +450,16 @@ class TestAddDropColumn(fixture.DB):
+         
+         self.table.drop()
+         self.meta.clear()
+-        
++
++        # NOTE(mriedem): DB2 does not currently support unique constraints
++        # on nullable columns, so the columns that are used to create the
++        # foreign keys here need to be non-nullable for testing with DB2
++        # to work.
++
+         # create FK's target
+         reftable = Table('tmp_ref', self.meta,
+             Column('id', Integer, primary_key=True),
+-            Column('jd', Integer),
++            Column('jd', Integer, nullable=False),
+             UniqueConstraint('id','jd')
+             )
+         if self.engine.has_table(reftable.name):
+@@ -464,8 +470,8 @@ class TestAddDropColumn(fixture.DB):
+         self.table = Table(
+             self.table_name, self.meta,
+             Column('id', Integer, primary_key=True),
+-            Column('r1', Integer),
+-            Column('r2', Integer),
++            Column('r1', Integer, nullable=False),
++            Column('r2', Integer, nullable=False),
+             ForeignKeyConstraint(['r1','r2'],
+                                  [reftable.c.id,reftable.c.jd],
+                                  name='test_fk')
+diff --git a/migrate/tests/versioning/test_genmodel.py b/migrate/tests/versioning/test_genmodel.py
+index e36bea1..f7924ff 100644
+--- a/migrate/tests/versioning/test_genmodel.py
++++ b/migrate/tests/versioning/test_genmodel.py
+@@ -39,7 +39,9 @@ class TestSchemaDiff(fixture.DB):
+         diff = schemadiff.getDiffOfModelAgainstDatabase(self.meta, self.engine, excludeTables=['migrate_version'])
+         genmodel.ModelGenerator(diff,self.engine).runB2A()
+ 
+-    @fixture.usedb()
++    # NOTE(mriedem): DB2 handles UnicodeText as LONG VARGRAPHIC
++    # so the schema diffs on the columns don't work with this test.
++    @fixture.usedb(not_supported='ibm_db_sa')
+     def test_functional(self):
+ 
+         def assertDiff(isDiff, tablesMissingInDatabase, tablesMissingInModel, tablesWithDiff):
+diff --git a/migrate/tests/versioning/test_schemadiff.py b/migrate/tests/versioning/test_schemadiff.py
+index 74714e2..1ff353f 100644
+--- a/migrate/tests/versioning/test_schemadiff.py
++++ b/migrate/tests/versioning/test_schemadiff.py
+@@ -157,7 +157,10 @@ class Test_getDiffOfModelAgainstDatabase(SchemaDiffBase):
+             Column('data', Float()),
+             )
+ 
+-    @fixture.usedb()
++    # NOTE(mriedem): The ibm_db_sa driver handles the Float() as a DOUBLE()
++    # which extends Numeric() but isn't defined in sqlalchemy.types, so we
++    # can't check for it as a special case like is done in schemadiff.ColDiff.
++    @fixture.usedb(not_supported='ibm_db_sa')
+     def test_float_vs_numeric(self):
+         self._assert_diff(
+             Column('data', Float()),
+diff --git a/migrate/tests/versioning/test_version.py b/migrate/tests/versioning/test_version.py
+index 436d5f9..f521659 100644
+--- a/migrate/tests/versioning/test_version.py
++++ b/migrate/tests/versioning/test_version.py
+@@ -160,6 +160,15 @@ class TestVersion(fixture.Pathed):
+         ver = Version(1, self.temp_usable_dir, [])
+         self.assertRaises(ScriptError, ver.add_script, '123.sql')
+ 
++        # tests bad ibm_db_sa filename
++        ver = Version(123, self.temp_usable_dir, [])
++        self.assertRaises(ScriptError, ver.add_script,
++                          '123_ibm_db_sa_upgrade.sql')
++
++        # tests that the name is ok but the script doesn't exist
++        self.assertRaises(InvalidScriptError, ver.add_script,
++                          '123_test_ibm_db_sa_upgrade.sql')
++
+         pyscript = os.path.join(self.temp_usable_dir, 'bla.py')
+         open(pyscript, 'w')
+         ver.add_script(pyscript)
+diff --git a/migrate/versioning/version.py b/migrate/versioning/version.py
+index 26cdd59..0f92dd8 100644
+--- a/migrate/versioning/version.py
++++ b/migrate/versioning/version.py
+@@ -221,7 +221,17 @@ class Version(object):
+                     "(needs to be ###_description_database_operation.sql)")
+             version = parts[0]
+             op = parts[-1]
+-            dbms = parts[-2]
++            # NOTE(mriedem): check for ibm_db_sa as the database in the name
++            if 'ibm_db_sa' in basename:
++                if len(parts) == 6:
++                    dbms = '_'.join(parts[-4: -1])
++                else:
++                    raise exceptions.ScriptError(
++                        "Invalid ibm_db_sa SQL script name '%s'; "
++                        "(needs to be "
++                        "###_description_ibm_db_sa_operation.sql)" % basename)
++            else:
++                dbms = parts[-2]
+         else:
+             raise exceptions.ScriptError(
+                 "Invalid SQL script name %s " % basename + \
+diff --git a/requirements.txt b/requirements.txt
+index ad745cc..17a1932 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -1,5 +1,9 @@
+ pbr>=0.5.21,<1.0
+ 
+-SQLAlchemy >= 0.6
++# never put a cap on this, *ever*, sqla versions are handled via
++# tox, and if SQLA is capped it will only make it so we aren't testing
++# against all the versions we are compatible with.
++SQLAlchemy>=0.7.8
+ decorator
++six>=1.4.1
+ Tempita >= 0.4
+diff --git a/test-requirements.txt b/test-requirements.txt
+index 121ccf6..b665c4a 100644
+--- a/test-requirements.txt
++++ b/test-requirements.txt
+@@ -1,26 +1,28 @@
+ # Install bounded pep8/pyflakes first, then let flake8 install
+ pep8==1.4.5
+-pyflakes==0.7.2
++pyflakes>=0.7.2,<0.7.4
+ flake8==2.0
+-hacking>=0.5.3,<0.6
++hacking>=0.8.0,<0.9
+ 
+ coverage>=3.6
+ discover
+ feedparser
+-fixtures>=0.3.12
+-mox==0.5.3
++fixtures>=0.3.14
++ibm_db_sa>=0.3.0
++mock>=1.0
++mox>=0.5.3
+ MySQL-python
+ psycopg2
+ pylint==0.25.2
+ python-subunit
+-sphinx>=1.1.2
++sphinx>=1.1.2,<1.2
+ sphinxcontrib_issuetracker
+-testrepository>=0.0.13
+-testtools>=0.9.27
++testrepository>=0.0.17
++testtools>=0.9.34
+ 
+ # NOTE: scripttest 1.0.1 removes base_path argument to ScriptTest
+ scripttest==1.0
+ # NOTE(rpodolyaka): This version identifier is currently necessary as
+ #                   pytz otherwise does not install on pip 1.4 or higher
+-pytz>=0a
++pytz>=2010h
+ pysqlite
+diff --git a/test_db.cfg b/test_db.cfg
+index 7691816..100119c 100644
+--- a/test_db.cfg
++++ b/test_db.cfg
+@@ -12,3 +12,4 @@ postgresql://openstack_citest:openstack_citest@localhost/openstack_citest
+ mysql://openstack_citest:openstack_citest@localhost/openstack_citest
+ #oracle://scott:tiger@localhost
+ #firebird://scott:tiger@localhost//var/lib/firebird/databases/test_migrate
++#ibm_db_sa://migrate:migrate@localhost:50000/migrate
+diff --git a/tox.ini b/tox.ini
+index 88f00db..aab860e 100644
+--- a/tox.ini
++++ b/tox.ini
+@@ -12,6 +12,14 @@ deps = -r{toxinidir}/requirements.txt
+ commands =
+   python setup.py testr --slowest --testr-args='{posargs} --concurrency=1'
+ 
++[testenv:py26]
++deps = sqlalchemy>=0.8,<=0.8.99
++       -r{toxinidir}/test-requirements.txt
++
++[testenv:py27]
++deps = sqlalchemy>=0.8,<=0.8.99
++       -r{toxinidir}/test-requirements.txt
++
+ [testenv:py26sa07]
+ basepython = python2.6
+ deps = sqlalchemy>=0.7,<=0.7.99

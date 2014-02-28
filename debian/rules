@@ -19,6 +19,7 @@ override_dh_auto_clean:
 	rm -rf dist build
 	find . -name '*\.py[co]' -exec rm {} \;
 	rm -f docs/reference.txt debian/install
+	cp debian/test_db.cfg $(CURDIR)
 
 override_dh_auto_install:
 	# install documentation
@@ -40,5 +41,7 @@ override_dh_compress:
 
 ifeq (,$(findstring nocheck, $(DEB_BUILD_OPTIONS)))
 override_dh_auto_test:
-	python setup.py testr --slowest || true
+	chmod +x debian/test.sh
+	$(CURDIR)/debian/test.sh
+	#PYTHONPATH=. python setup.py testr --slowest || true
 endif

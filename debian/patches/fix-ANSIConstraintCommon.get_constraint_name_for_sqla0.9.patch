@@ -1,0 +1,18 @@
+Description: fix-ANSIConstraintCommon.get_constraint_name_for_sqla0.9
+ See this for details:
+ https://code.google.com/p/sqlalchemy-migrate/issues/detail?id=127
+Author: Thomas Goirand <zigo@debian.org>
+Origin: other, https://code.google.com/p/sqlalchemy-migrate/issues/detail?id=127
+Last-Update: 2014-02-25
+
+--- migrate-0.8.2+20130223+git21fcdad0f4.orig/migrate/changeset/ansisql.py
++++ migrate-0.8.2+20130223+git21fcdad0f4/migrate/changeset/ansisql.py
+@@ -281,7 +281,7 @@ class ANSIConstraintCommon(AlterTableVis
+             ret = cons.name
+         else:
+             ret = cons.name = cons.autoname()
+-        return self.preparer.quote(ret, cons.quote)
++        return ret
+ 
+     def visit_migrate_primary_key_constraint(self, *p, **k):
+         self._visit_constraint(*p, **k)

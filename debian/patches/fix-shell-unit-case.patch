@@ -1,0 +1,20 @@
+Description: Fix migrate/tests/fixture/shell.py
+ Without this patch, we have lots of these:
+ Traceback (most recent call last):
+  File "migrate/tests/fixture/shell.py", line 25, in setUp
+    script_path=[migrate_path],
+ TypeError: __init__() got an unexpected keyword argument 'script_path'
+Author: Thomas Goirand <zigo@debian.org>
+Forwarded: no
+Last-Update: 2014-02-25
+
+--- migrate-0.8.2+20130223+git21fcdad0f4.orig/migrate/tests/fixture/shell.py
++++ migrate-0.8.2+20130223+git21fcdad0f4/migrate/tests/fixture/shell.py
+@@ -22,7 +22,6 @@ class Shell(Pathed):
+         log.debug('PATH for ScriptTest: %s', migrate_path)
+         self.env = TestFileEnvironment(
+             base_path=os.path.join(self.temp_usable_dir, 'env'),
+-            script_path=[migrate_path],
+         )
+ 
+     def run_version(self, repos_path):
