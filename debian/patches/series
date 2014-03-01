@@ -2,8 +2,8 @@ use-local-intersphinx.patch
 keep_empty_modules.patch
 disable_issuetracker.patch
 0.8.2_to_20130223+git21fcdad0f4.patch
-fix-self.quote.patch
 provide_sqla_0.9_compatibility.patch
 fix-ANSIConstraintCommon.get_constraint_name_for_sqla0.9.patch
 fix-shell-unit-case.patch
 genmodel-fix.patch
+fix-self.quote-vs-self.name.quote.patch
