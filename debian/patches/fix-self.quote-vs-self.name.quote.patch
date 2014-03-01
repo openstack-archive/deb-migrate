@@ -41,7 +41,15 @@ Last-Update: 2014-03-01
              onupdate=self.onupdate,
 --- migrate-0.8.2.orig/migrate/changeset/databases/mysql.py
 +++ migrate-0.8.2/migrate/changeset/databases/mysql.py
-@@ -34,7 +34,12 @@ class MySQLSchemaChanger(MySQLSchemaGene
+@@ -2,6 +2,7 @@
+    MySQL database specific implementations of changeset classes.
+ """
+ 
++import sqlalchemy
+ from sqlalchemy.databases import mysql as sa_base
+ from sqlalchemy import types as sqltypes
+ 
+@@ -34,7 +35,12 @@ class MySQLSchemaChanger(MySQLSchemaGene
                  first = primary_keys.pop(0)
                  if first.name == delta.current_name:
                      colspec += " AUTO_INCREMENT"
