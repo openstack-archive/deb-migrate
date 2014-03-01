@@ -7,18 +7,21 @@ Last-Update: 2014-03-01
 
 --- migrate-0.8.2.orig/migrate/changeset/ansisql.py
 +++ migrate-0.8.2/migrate/changeset/ansisql.py
-@@ -163,6 +163,11 @@ class ANSISchemaChanger(AlterTableVisito
+@@ -163,8 +163,12 @@ class ANSISchemaChanger(AlterTableVisito
      def visit_table(self, table):
          """Rename a table. Other ops aren't supported."""
          self.start_alter_table(table)
+-        self.append("RENAME TO %s" % self.preparer.quote(table.new_name,
+-                                                         table.quote))
 +        sqla_majv,sqla_medv,sqla_minv = sqlalchemy.__version__.split('.')
 +        if int(sqla_medv) < 9:
 +            q = table.quote
 +        else:
 +            q = table.name.quote
-         self.append("RENAME TO %s" % self.preparer.quote(table.new_name,
-                                                          table.quote))
++        self.append("RENAME TO %s" % self.preparer.quote(table.new_name, q))
          self.execute()
+ 
+     def visit_index(self, index):
 --- migrate-0.8.2.orig/migrate/changeset/schema.py
 +++ migrate-0.8.2/migrate/changeset/schema.py
 @@ -601,11 +601,16 @@ populated with defaults
