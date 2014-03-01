@@ -42,17 +42,24 @@ override_dh_compress:
 ifeq (,$(findstring nocheck, $(DEB_BUILD_OPTIONS)))
 override_dh_auto_test:
 	chmod +x debian/test.sh
+
+	# Create a working "migrate" binary, so that shell calls continue to
+	# work even without python-migrate being installed
+	mkdir -p debian/bin
+	cp debian/migrate-for-tests debian/bin/migrate
+	sed -i "s#REPLACE_THIS_PATH#$(CURDIR)#" debian/bin/migrate
+
+	# Create a minimalist egg-info, so that "import migrate"
+	# works and gets the correct version
 	mkdir -p sqlalchemy_migrate-$(VERSION).egg-info
-	echo "Metadata-Version: 1.1
-Name: sqlalchemy-migrate
-Version: $(VERSION)
-Summary: Database schema migration for SQLAlchemy
-Home-page: http://www.openstack.org/
-Author: OpenStack
-Author-email: openstack-dev@lists.openstack.org
-License: UNKNOWN
-Description: sqlalchemy-migrate" >sqlalchemy_migrate-$(VERSION).egg-info/PKG-INFO
+	echo "Metadata-Version: 1.1" >sqlalchemy_migrate-$(VERSION).egg-info/PKG-INFO
+	echo "Name: sqlalchemy-migrate" >>sqlalchemy_migrate-$(VERSION).egg-info/PKG-INFO
+	echo "Version: $(VERSION)" >>sqlalchemy_migrate-$(VERSION).egg-info/PKG-INFO
+
+	# Launch the actual tests
 	$(CURDIR)/debian/test.sh
+
+	# Clean everything
+	rm -rf debian/bin
 	rm -rf sqlalchemy_migrate-$(VERSION).egg-info
-	#PYTHONPATH=. python setup.py testr --slowest || true
 endif

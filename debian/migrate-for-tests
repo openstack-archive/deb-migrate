@@ -1,0 +1,7 @@
+#!/usr/bin/python
+import sys
+
+sys.path.append("REPLACE_THIS_PATH")
+from migrate.versioning.shell import main
+
+sys.exit(main())

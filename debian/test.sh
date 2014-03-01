@@ -33,8 +33,9 @@ echo "===> Creating the db"
 /usr/bin/mysql --socket=${MYTEMP_DIR}/mysql.sock --execute="CREATE DATABASE openstack_citest"
 
 echo "===> Doing the unit tests"
-
-PYTHONPATH=. python setup.py testr --slowest || true
+# We set `pwd`/debian/bin in the path to have
+# our "migrate" binary accessible
+PATH=$PATH:`pwd`/debian/bin PYTHONPATH=. python setup.py testr --slowest || true
 
 echo "===> Shutting down MySQL"
 /usr/bin/mysqladmin --socket=${MYTEMP_DIR}/mysql.sock shutdown
