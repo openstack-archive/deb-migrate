@@ -12,7 +12,7 @@ Last-Update: 2014-03-01
          """Rename a table. Other ops aren't supported."""
          self.start_alter_table(table)
 +        sqla_majv,sqla_medv,sqla_minv = sqlalchemy.__version__.split('.')
-+        if sqla_medv < 9:
++        if int(sqla_medv) < 9:
 +            q = table.quote
 +        else:
 +            q = table.name.quote
@@ -26,7 +26,7 @@ Last-Update: 2014-03-01
      def copy_fixed(self, **kw):
          """Create a copy of this ``Column``, with all attributes."""
 +        sqla_majv,sqla_medv,sqla_minv = sqlalchemy.__version__.split('.')
-+        if sqla_medv < 9:
++        if int(sqla_medv) < 9:
 +            q = self.quote
 +        else:
 +            q = self.name.quote
@@ -55,7 +55,7 @@ Last-Update: 2014-03-01
                      colspec += " AUTO_INCREMENT"
 -        old_col_name = self.preparer.quote(delta.current_name, table.quote)
 +        sqla_majv,sqla_medv,sqla_minv = sqlalchemy.__version__.split('.')
-+        if sqla_medv < 9:
++        if int(sqla_medv) < 9:
 +            q = table.quote
 +        else:
 +            q = table.name.quote
