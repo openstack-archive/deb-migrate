@@ -9,6 +9,7 @@ migrate (0.8.2-5) unstable; urgency=medium
   * Added upstream SQLA 9 patch.
   * Added MySQL tests capability in the unit tests.
   * Adds a couple of SQLA 9 homebrewed patches.
+  * Build-depends on python-subunit (>= 0.0.18) now.
 
  -- Thomas Goirand <zigo@debian.org>  Mon, 24 Feb 2014 04:46:37 +0000
 
