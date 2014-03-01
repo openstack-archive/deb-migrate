@@ -1,7 +1,7 @@
 #!/usr/bin/make -f
 
 UPSTREAM_GIT = git://github.com/stackforge/sqlalchemy-migrate.git
--include /usr/share/openstack-pkg-tools/pkgos.make
+include /usr/share/openstack-pkg-tools/pkgos.make
 
 export OSLO_PACKAGE_VERSION=$(VERSION)
 
@@ -42,6 +42,17 @@ override_dh_compress:
 ifeq (,$(findstring nocheck, $(DEB_BUILD_OPTIONS)))
 override_dh_auto_test:
 	chmod +x debian/test.sh
+	mkdir -p sqlalchemy_migrate-$(VERSION).egg-info
+	echo "Metadata-Version: 1.1
+Name: sqlalchemy-migrate
+Version: $(VERSION)
+Summary: Database schema migration for SQLAlchemy
+Home-page: http://www.openstack.org/
+Author: OpenStack
+Author-email: openstack-dev@lists.openstack.org
+License: UNKNOWN
+Description: sqlalchemy-migrate" >sqlalchemy_migrate-$(VERSION).egg-info/PKG-INFO
 	$(CURDIR)/debian/test.sh
+	rm -rf sqlalchemy_migrate-$(VERSION).egg-info
 	#PYTHONPATH=. python setup.py testr --slowest || true
 endif
