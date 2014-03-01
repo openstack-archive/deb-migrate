@@ -8,8 +8,9 @@ ME=`whoami`
 # --force is needed because buildd's can't resolve their own hostnames to ips
 echo "===> Preparing MySQL temp folder"
 mysql_install_db --no-defaults --datadir=${MYTEMP_DIR} --force --skip-name-resolve --user=${ME}
+chown -R ${ME} ${MYTEMP_DIR}
 echo "===> Starting MySQL"
-/usr/sbin/mysqld --no-defaults --skip-grant --user=openstack_citest --socket=${MYTEMP_DIR}/mysql.sock --datadir=${MYTEMP_DIR} --skip-networking &
+/usr/sbin/mysqld --no-defaults --skip-grant-tables --user=${ME} --socket=${MYTEMP_DIR}/mysql.sock --datadir=${MYTEMP_DIR} --skip-networking &
 
 echo "===> Sleeping 3 seconds after starting MySQL"
 sleep 3
