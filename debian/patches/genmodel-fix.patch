@@ -1,4 +1,20 @@
 Description: Fix genmodel
+ Problem:
+  * Some python code was auto generated and exec'ed in that package.
+  * The python code that was problematic had a 'Table' definition
+  * The generated code imports '*' from sqlalchemy
+  * One among the 'Column' was defined as an 'INTEGER' type, which points to
+    sqlalchemy.sql.sqltypes.INTEGER
+  * The INTEGER class was initialised with a parameter display_width which
+    contradicts with sqlalchemy.sql.sqltypes.INTEGER.__init__, which does not
+    accept any parameters
+  * The 'INTEGER' class should have been imported from mysql dialects' type
+    module
+ Solution:
+  * While generating, in the header part, I am now checking if any of the
+    column.type.__class__.__name__ has 'dialects' in it.
+  * If I find any, I am adding the import rule such that the type is imported
+    from the dialects' type.
 Author: Anbu <anbu@enovance.com>
 Forwarded: no
 Last-Update: 2014-03-01
