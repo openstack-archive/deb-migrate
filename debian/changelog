@@ -1,8 +1,7 @@
-migrate (0.8.2-5) unstable; urgency=medium
+migrate (0.8.5-1) unstable; urgency=medium
 
-  * Added patch gathering all upstream commits from git, up to
-    20130223+git21fcdad0f4. This version is still called "0.8.2" because
-    distribute doesn't like anything smarter (how lame...).
+  * New upstream release.
+  * Added patches which I worked out with upstream.
   * Added fix for deprecation.
   * Now build-depends on python-testtools (>= 0.9.35).
   * Added PYTHONPATH=. when running tests.
