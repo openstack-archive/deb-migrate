@@ -1,0 +1,45 @@
+Description: Conditionally import ibmdb2/ibm_db_sa
+ Since ibm_db_sa is not part of sqlalchemy, we need to handle the conditional
+ import of the module in visitor.py so we don't get an ImportError if
+ ibm_db_sa is not available.
+Author: Matt Riedemann <mriedem@us.ibm.com>
+Date: Mon, 3 Mar 2014 10:31:52 -0800
+
+diff --git a/migrate/changeset/databases/visitor.py b/migrate/changeset/databases/visitor.py
+index 224c40f..c70aa6b 100644
+--- a/migrate/changeset/databases/visitor.py
++++ b/migrate/changeset/databases/visitor.py
+@@ -8,8 +8,7 @@ from migrate.changeset.databases import (sqlite,
+                                          postgres,
+                                          mysql,
+                                          oracle,
+-                                         firebird,
+-                                         ibmdb2)
++                                         firebird)
+ 
+ 
+ # Map SA dialects to the corresponding Migrate extensions
+@@ -21,10 +20,19 @@ DIALECTS = {
+     "mysql": mysql.MySQLDialect,
+     "oracle": oracle.OracleDialect,
+     "firebird": firebird.FBDialect,
+-    "ibm_db_sa": ibmdb2.IBMDBDialect
+ }
+ 
+ 
++# NOTE(mriedem): We have to conditionally check for DB2 in case ibm_db_sa
++# isn't available since ibm_db_sa is not packaged in sqlalchemy like the
++# other dialects.
++try:
++    from migrate.changeset.databases import ibmdb2
++    DIALECTS["ibm_db_sa"] = ibmdb2.IBMDBDialect
++except ImportError:
++    pass
++
++
+ def get_engine_visitor(engine, name):
+     """
+     Get the visitor implementation for the given database engine.
+-- 
+1.7.10.4
+

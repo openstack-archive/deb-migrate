@@ -1,0 +1,24 @@
+Description: Replace AbstractType by TypeEngine
+ AbstractType not longer exists in the class  hierarchy for types. TypeEngine
+ was its direct descendant, so use that instead.
+Change-Id: Idbfaee4b0d3acbc4795913ddf2ab4e1c9b6d065c
+From 7161cf2c9e383bbafe9d018058e23304c6b4edc2 Mon Sep 17 00:00:00 2001
+Author: Thomas Goirand <thomas@goirand.fr>
+Date: Mon, 3 Mar 2014 22:27:57 +0800
+
+diff --git a/migrate/changeset/schema.py b/migrate/changeset/schema.py
+index 073379c..913b90f 100644
+--- a/migrate/changeset/schema.py
++++ b/migrate/changeset/schema.py
+@@ -334,7 +334,7 @@ class ColumnDelta(DictMixin, sqlalchemy.schema.SchemaItem):
+         while len(p):
+             if isinstance(p[0], basestring):
+                 k.setdefault('name', p.pop(0))
+-            elif isinstance(p[0], sqlalchemy.types.AbstractType):
++            elif isinstance(p[0], sqlalchemy.types.TypeEngine):
+                 k.setdefault('type', p.pop(0))
+             elif callable(p[0]):
+                 p[0] = p[0]()
+-- 
+1.7.10.4
+

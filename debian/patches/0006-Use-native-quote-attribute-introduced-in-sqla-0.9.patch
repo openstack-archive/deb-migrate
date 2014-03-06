@@ -1,0 +1,270 @@
+Description: Use native quote attribute introduced in sqla 0.9
+ In SQLA 0.9 there is now a native .quote attribute on many objects.
+ Conditionally use this instead of the old method if the attribute exists, to
+ remove deprecation messages (and prepare for when the other way will be fully
+ removed).
+Change-Id: I3c5fada13e044c1c4102acc0455226ce1524f2e2
+From 8d6ce64cd08c0598963a92844495782997cd59f3 Mon Sep 17 00:00:00 2001
+Author: Thomas Goirand <thomas@goirand.fr>
+Date: Sun, 2 Mar 2014 14:03:51 +0800
+
+diff --git a/migrate/changeset/ansisql.py b/migrate/changeset/ansisql.py
+index c5ff405..b4509ae 100644
+--- a/migrate/changeset/ansisql.py
++++ b/migrate/changeset/ansisql.py
+@@ -19,6 +19,7 @@ from sqlalchemy.schema import (ForeignKeyConstraint,
+ from migrate import exceptions
+ import sqlalchemy.sql.compiler
+ from migrate.changeset import constraint
++from migrate.changeset import util
+ 
+ from sqlalchemy.schema import AddConstraint, DropConstraint
+ from sqlalchemy.sql.compiler import DDLCompiler
+@@ -56,7 +57,7 @@ class AlterTableVisitor(SchemaVisitor):
+             # adapt to 0.6 which uses a string-returning
+             # object
+             self.append(" %s" % ret)
+-            
++
+     def _to_table(self, param):
+         """Returns the table object for the given param object."""
+         if isinstance(param, (sa.Column, sa.Index, sa.schema.Constraint)):
+@@ -113,7 +114,7 @@ class ANSIColumnGenerator(AlterTableVisitor, SchemaGenerator):
+         # SA bounds FK constraints to table, add manually
+         for fk in column.foreign_keys:
+             self.add_foreignkey(fk.constraint)
+-        
++
+         # add primary key constraint if needed
+         if column.primary_key_name:
+             cons = constraint.PrimaryKeyConstraint(column,
+@@ -157,8 +158,8 @@ class ANSISchemaChanger(AlterTableVisitor, SchemaGenerator):
+     def visit_table(self, table):
+         """Rename a table. Other ops aren't supported."""
+         self.start_alter_table(table)
+-        self.append("RENAME TO %s" % self.preparer.quote(table.new_name,
+-                                                         table.quote))
++        q = util.safe_quote(table)
++        self.append("RENAME TO %s" % self.preparer.quote(table.new_name, q))
+         self.execute()
+ 
+     def visit_index(self, index):
+@@ -227,7 +228,8 @@ class ANSISchemaChanger(AlterTableVisitor, SchemaGenerator):
+     def start_alter_column(self, table, col_name):
+         """Starts ALTER COLUMN"""
+         self.start_alter_table(table)
+-        self.append("ALTER COLUMN %s " % self.preparer.quote(col_name, table.quote))
++        q = util.safe_quote(table)
++        self.append("ALTER COLUMN %s " % self.preparer.quote(col_name, q))
+ 
+     def _visit_column_nullable(self, table, column, delta):
+         nullable = delta['nullable']
+@@ -250,7 +252,8 @@ class ANSISchemaChanger(AlterTableVisitor, SchemaGenerator):
+ 
+     def _visit_column_name(self, table, column, delta):
+         self.start_alter_table(table)
+-        col_name = self.preparer.quote(delta.current_name, table.quote)
++        q = util.safe_quote(table)
++        col_name = self.preparer.quote(delta.current_name, q)
+         new_name = self.preparer.format_column(delta.result_column)
+         self.append('RENAME COLUMN %s TO %s' % (col_name, new_name))
+ 
+diff --git a/migrate/changeset/databases/mysql.py b/migrate/changeset/databases/mysql.py
+index 6987b4b..29518e2 100644
+--- a/migrate/changeset/databases/mysql.py
++++ b/migrate/changeset/databases/mysql.py
+@@ -2,11 +2,14 @@
+    MySQL database specific implementations of changeset classes.
+ """
+ 
++import sqlalchemy
+ from sqlalchemy.databases import mysql as sa_base
+ from sqlalchemy import types as sqltypes
+ 
+ from migrate import exceptions
+ from migrate.changeset import ansisql
++from migrate.changeset import util
++
+ 
+ 
+ MySQLSchemaGenerator = sa_base.MySQLDDLCompiler
+@@ -34,7 +37,8 @@ class MySQLSchemaChanger(MySQLSchemaGenerator, ansisql.ANSISchemaChanger):
+                 first = primary_keys.pop(0)
+                 if first.name == delta.current_name:
+                     colspec += " AUTO_INCREMENT"
+-        old_col_name = self.preparer.quote(delta.current_name, table.quote)
++        q = util.safe_quote(table)
++        old_col_name = self.preparer.quote(delta.current_name, q)
+ 
+         self.start_alter_table(table)
+ 
+diff --git a/migrate/changeset/schema.py b/migrate/changeset/schema.py
+index 5a77208..073379c 100644
+--- a/migrate/changeset/schema.py
++++ b/migrate/changeset/schema.py
+@@ -12,6 +12,7 @@ from sqlalchemy.schema import UniqueConstraint
+ 
+ from migrate.exceptions import *
+ from migrate.changeset import SQLA_07, SQLA_08
++from migrate.changeset import util
+ from migrate.changeset.databases.visitor import (get_engine_visitor,
+                                                  run_single_visitor)
+ 
+@@ -31,7 +32,7 @@ __all__ = [
+ 
+ def create_column(column, table=None, *p, **kw):
+     """Create a column, given the table.
+-    
++
+     API to :meth:`ChangesetColumn.create`.
+     """
+     if table is not None:
+@@ -41,7 +42,7 @@ def create_column(column, table=None, *p, **kw):
+ 
+ def drop_column(column, table=None, *p, **kw):
+     """Drop a column, given the table.
+-    
++
+     API to :meth:`ChangesetColumn.drop`.
+     """
+     if table is not None:
+@@ -105,12 +106,12 @@ def alter_column(*p, **k):
+     :param engine:
+       The :class:`~sqlalchemy.engine.base.Engine` to use for table
+       reflection and schema alterations.
+-    
++
+     :returns: A :class:`ColumnDelta` instance representing the change.
+ 
+-    
++
+     """
+-    
++
+     if 'table' not in k and isinstance(p[0], sqlalchemy.Column):
+         k['table'] = p[0].table
+     if 'engine' not in k:
+@@ -129,7 +130,7 @@ def alter_column(*p, **k):
+     # that this crutch has to be left in until they can be sorted
+     # out
+     k['alter_metadata']=True
+-    
++
+     delta = ColumnDelta(*p, **k)
+ 
+     visitorcallable = get_engine_visitor(engine, 'schemachanger')
+@@ -183,10 +184,10 @@ class ColumnDelta(DictMixin, sqlalchemy.schema.SchemaItem):
+         :param table: Table at which current Column should be bound to.\
+         If table name is given, reflection will be used.
+         :type table: string or Table instance
+-        
++
+         :param metadata: A :class:`MetaData` instance to store
+                          reflected table names
+-                         
++
+         :param engine: When reflecting tables, either engine or metadata must \
+         be specified to acquire engine object.
+         :type engine: :class:`Engine` instance
+@@ -211,7 +212,7 @@ class ColumnDelta(DictMixin, sqlalchemy.schema.SchemaItem):
+         # as a crutch until the tests that fail when 'alter_metadata'
+         # behaviour always happens can be sorted out
+         self.alter_metadata = kw.pop("alter_metadata", False)
+-        
++
+         self.meta = kw.pop("metadata", None)
+         self.engine = kw.pop("engine", None)
+ 
+@@ -239,7 +240,7 @@ class ColumnDelta(DictMixin, sqlalchemy.schema.SchemaItem):
+             self.alter_metadata,
+             super(ColumnDelta, self).__repr__()
+             )
+-    
++
+     def __getitem__(self, key):
+         if key not in self.keys():
+             raise KeyError("No such diff key, available: %s" % self.diffs )
+@@ -278,7 +279,7 @@ class ColumnDelta(DictMixin, sqlalchemy.schema.SchemaItem):
+         """Compares two Column objects"""
+         self.process_column(new_col)
+         self.table = k.pop('table', None)
+-        # we cannot use bool() on table in SA06 
++        # we cannot use bool() on table in SA06
+         if self.table is None:
+             self.table = old_col.table
+         if self.table is None:
+@@ -482,7 +483,7 @@ class ChangesetColumn(object):
+ 
+     def alter(self, *p, **k):
+         """Makes a call to :func:`alter_column` for the column this
+-        method is called on. 
++        method is called on.
+         """
+         if 'table' not in k:
+             k['table'] = self.table
+@@ -560,12 +561,12 @@ populated with defaults
+ 
+     def _col_name_in_constraint(self,cons,name):
+         return False
+-    
++
+     def remove_from_table(self, table, unset_table=True):
+         # TODO: remove primary keys, constraints, etc
+         if unset_table:
+             self.table = None
+-            
++
+         to_drop = set()
+         for index in table.indexes:
+             columns = []
+@@ -579,7 +580,7 @@ populated with defaults
+             else:
+                 to_drop.add(index)
+         table.indexes = table.indexes - to_drop
+-        
++
+         to_drop = set()
+         for cons in table.constraints:
+             # TODO: deal with other types of constraint
+@@ -591,7 +592,7 @@ populated with defaults
+                     if self.name==col_name:
+                         to_drop.add(cons)
+         table.constraints = table.constraints - to_drop
+-        
++
+         if table.c.contains_column(self):
+             if SQLA_07:
+                 table._columns.remove(self)
+@@ -601,11 +602,12 @@ populated with defaults
+     # TODO: this is fixed in 0.6
+     def copy_fixed(self, **kw):
+         """Create a copy of this ``Column``, with all attributes."""
++        q = util.safe_quote(self)
+         return sqlalchemy.Column(self.name, self.type, self.default,
+             key=self.key,
+             primary_key=self.primary_key,
+             nullable=self.nullable,
+-            quote=self.quote,
++            quote=q,
+             index=self.index,
+             unique=self.unique,
+             onupdate=self.onupdate,
+diff --git a/migrate/changeset/util.py b/migrate/changeset/util.py
+new file mode 100644
+index 0000000..402870f
+--- /dev/null
++++ b/migrate/changeset/util.py
+@@ -0,0 +1,10 @@
++"""
++Safe quoting method
++"""
++
++def safe_quote(obj):
++    # this is the SQLA 0.9 approach
++    if hasattr(obj, 'name') and hasattr(obj.name, 'quote'):
++        return obj.name.quote
++    else:
++        return obj.quote
+-- 
+1.7.10.4
+

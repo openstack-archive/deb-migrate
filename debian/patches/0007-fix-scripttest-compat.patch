@@ -1,0 +1,23 @@
+Subject: fix scripttest compat
+ There's no script_path param in the current version of scripttest. This patch
+ fixes that by removing the param, which by the way isn't useful.
+From b58b4a353cd928944cbe418903e6a13bf2914b39 Mon Sep 17 00:00:00 2001
+Author: Thomas Goirand <thomas@goirand.fr>
+Date: Sun, 2 Mar 2014 13:13:55 +0800
+Change-Id: Ic78cea25bb472702473e98b48a8ff74c01545aa3
+
+diff --git a/migrate/tests/fixture/shell.py b/migrate/tests/fixture/shell.py
+index a724c9a..566d250 100644
+--- a/migrate/tests/fixture/shell.py
++++ b/migrate/tests/fixture/shell.py
+@@ -22,7 +22,6 @@ class Shell(Pathed):
+         log.debug('PATH for ScriptTest: %s', migrate_path)
+         self.env = TestFileEnvironment(
+             base_path=os.path.join(self.temp_usable_dir, 'env'),
+-            script_path=[migrate_path],
+         )
+ 
+     def run_version(self, repos_path):
+-- 
+1.7.10.4
+
