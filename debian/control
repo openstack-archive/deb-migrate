@@ -24,12 +24,11 @@ Build-Depends: debhelper (>= 9),
                python-sphinx (>= 1.0.7+dfsg),
                python-subunit (>= 0.0.18),
                python-sqlalchemy,
-               python-subunit,
                python-tempita (>= 0.4),
                python-testtools (>= 0.9.35),
                python-tz,
                testrepository (>= 0.0.13)
-Standards-Version: 3.9.4
+Standards-Version: 3.9.5
 Homepage: https://github.com/stackforge/sqlalchemy-migrate
 Vcs-Git: git://anonscm.debian.org/openstack/migrate.git
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=openstack/migrate.git;a=summary
