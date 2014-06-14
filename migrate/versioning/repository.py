@@ -43,7 +43,7 @@ class Changeset(dict):
         """
         In a series of upgrades x -> y, keys are version x. Sorted.
         """
-        ret = super(Changeset, self).keys()
+        ret = list(super(Changeset, self).keys())
         # Reverse order if downgrading
         ret.sort(reverse=(self.step < 1))
         return ret
@@ -94,7 +94,7 @@ class Repository(pathed.Pathed):
             cls.require_found(path)
             cls.require_found(os.path.join(path, cls._config))
             cls.require_found(os.path.join(path, cls._versions))
-        except exceptions.PathNotFoundError, e:
+        except exceptions.PathNotFoundError:
             raise exceptions.InvalidRepositoryError(path)
 
     @classmethod
@@ -153,7 +153,7 @@ class Repository(pathed.Pathed):
 
     def create_script(self, description, **k):
         """API to :meth:`migrate.versioning.version.Collection.create_new_python_version`"""
-        
+
         k['use_timestamp_numbering'] = self.use_timestamp_numbering
         self.versions.create_new_python_version(description, **k)
 
@@ -221,7 +221,7 @@ class Repository(pathed.Pathed):
             range_mod = 0
             op = 'downgrade'
 
-        versions = range(start + range_mod, end + range_mod, step)
+        versions = range(int(start) + range_mod, int(end) + range_mod, step)
         changes = [self.version(v).script(database, op) for v in versions]
         ret = Changeset(start, step=step, *changes)
         return ret
@@ -229,7 +229,7 @@ class Repository(pathed.Pathed):
     @classmethod
     def create_manage_file(cls, file_, **opts):
         """Create a project management script (manage.py)
-        
+
         :param file_: Destination file to be written
         :param opts: Options that are passed to :func:`migrate.versioning.shell.main`
         """

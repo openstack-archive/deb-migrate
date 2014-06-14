@@ -23,6 +23,16 @@ DIALECTS = {
 }
 
 
+# NOTE(mriedem): We have to conditionally check for DB2 in case ibm_db_sa
+# isn't available since ibm_db_sa is not packaged in sqlalchemy like the
+# other dialects.
+try:
+    from migrate.changeset.databases import ibmdb2
+    DIALECTS["ibm_db_sa"] = ibmdb2.IBMDBDialect
+except ImportError:
+    pass
+
+
 def get_engine_visitor(engine, name):
     """
     Get the visitor implementation for the given database engine.

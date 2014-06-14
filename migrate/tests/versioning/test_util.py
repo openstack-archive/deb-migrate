@@ -20,7 +20,7 @@ class TestUtil(fixture.Pathed):
         url = 'sqlite://'
 
         engine = construct_engine(url)
-        self.assert_(engine.name == 'sqlite')
+        self.assertTrue(engine.name == 'sqlite')
 
         # keyword arg
         engine = construct_engine(url, engine_arg_encoding='utf-8')
@@ -45,7 +45,7 @@ class TestUtil(fixture.Pathed):
             # py 2.4 compatability :-/
             cw = catch_warnings(record=True)
             w = cw.__enter__()
-            
+
             warnings.simplefilter("always")
             engine = construct_engine(url, echo='True')
             self.assertTrue(engine.echo)
@@ -69,7 +69,7 @@ class TestUtil(fixture.Pathed):
         api.create(repo, 'temp')
         api.script('First Version', repo)
         engine = construct_engine('sqlite:///:memory:')
-        
+
         api.version_control(engine, repo)
         api.upgrade(engine, repo)
 
@@ -103,12 +103,12 @@ class TestUtil(fixture.Pathed):
             # py 2.4 compatability :-/
             cw = catch_warnings(record=True)
             w = cw.__enter__()
-            
+
             warnings.simplefilter("always")
 
             # deprecated spelling
             FakeFloat = load_model('test_load_model.FakeFloat')
-            self.assert_(isinstance(FakeFloat(), int))
+            self.assertTrue(isinstance(FakeFloat(), int))
 
             self.assertEqual(len(w),1)
             self.assertTrue(issubclass(w[-1].category,
@@ -117,15 +117,15 @@ class TestUtil(fixture.Pathed):
                 'model should be in form of module.model:User '
                 'and not module.model.User',
                 str(w[-1].message))
-            
+
         finally:
             cw.__exit__()
 
         FakeFloat = load_model('test_load_model:FakeFloat')
-        self.assert_(isinstance(FakeFloat(), int))
+        self.assertTrue(isinstance(FakeFloat(), int))
 
         FakeFloat = load_model(FakeFloat)
-        self.assert_(isinstance(FakeFloat(), int))
+        self.assertTrue(isinstance(FakeFloat(), int))
 
     def test_guess_obj_type(self):
         """guess object type from string"""

@@ -5,7 +5,8 @@ import os
 import sys
 import tempfile
 
-from cStringIO import StringIO
+import six
+from six.moves import cStringIO
 from sqlalchemy import MetaData, Table
 
 from migrate.exceptions import *
@@ -29,7 +30,7 @@ class TestShellCommands(Shell):
         # we can only test that we get some output
         for cmd in api.__all__:
             result = self.env.run('migrate help %s' % cmd)
-            self.assertTrue(isinstance(result.stdout, basestring))
+            self.assertTrue(isinstance(result.stdout, six.string_types))
             self.assertTrue(result.stdout)
             self.assertFalse(result.stderr)
 
@@ -52,7 +53,7 @@ class TestShellCommands(Shell):
         try:
             original = sys.argv
             sys.argv=['X','--help']
-            
+
             run_module('migrate.versioning.shell', run_name='__main__')
 
         finally:
@@ -61,11 +62,11 @@ class TestShellCommands(Shell):
     def _check_error(self,args,code,expected,**kw):
         original = sys.stderr
         try:
-            actual = StringIO()
+            actual = cStringIO()
             sys.stderr = actual
             try:
                 shell.main(args,**kw)
-            except SystemExit, e:
+            except SystemExit as e:
                 self.assertEqual(code,e.args[0])
             else:
                 self.fail('No exception raised')
@@ -73,7 +74,7 @@ class TestShellCommands(Shell):
             sys.stderr = original
         actual = actual.getvalue()
         self.assertTrue(expected in actual,'%r not in:\n"""\n%s\n"""'%(expected,actual))
-            
+
     def test_main(self):
         """Test main() function"""
         repos = self.tmp_repos()
@@ -96,7 +97,7 @@ class TestShellCommands(Shell):
         result = self.env.run('migrate create %s repository_name' % repos)
 
         # Files should actually be created
-        self.assert_(os.path.exists(repos))
+        self.assertTrue(os.path.exists(repos))
 
         # The default table should not be None
         repos_ = Repository(repos)
@@ -106,20 +107,20 @@ class TestShellCommands(Shell):
         result = self.env.run('migrate create %s repository_name' % repos,
             expect_error=True)
         self.assertEqual(result.returncode, 2)
-    
+
     def test_script(self):
         """We can create a migration script via the command line"""
         repos = self.tmp_repos()
         result = self.env.run('migrate create %s repository_name' % repos)
 
         result = self.env.run('migrate script --repository=%s Desc' % repos)
-        self.assert_(os.path.exists('%s/versions/001_Desc.py' % repos))
+        self.assertTrue(os.path.exists('%s/versions/001_Desc.py' % repos))
 
         result = self.env.run('migrate script More %s' % repos)
-        self.assert_(os.path.exists('%s/versions/002_More.py' % repos))
+        self.assertTrue(os.path.exists('%s/versions/002_More.py' % repos))
 
         result = self.env.run('migrate script "Some Random name" %s' % repos)
-        self.assert_(os.path.exists('%s/versions/003_Some_Random_name.py' % repos))
+        self.assertTrue(os.path.exists('%s/versions/003_Some_Random_name.py' % repos))
 
     def test_script_sql(self):
         """We can create a migration sql script via the command line"""
@@ -127,24 +128,24 @@ class TestShellCommands(Shell):
         result = self.env.run('migrate create %s repository_name' % repos)
 
         result = self.env.run('migrate script_sql mydb foo %s' % repos)
-        self.assert_(os.path.exists('%s/versions/001_foo_mydb_upgrade.sql' % repos))
-        self.assert_(os.path.exists('%s/versions/001_foo_mydb_downgrade.sql' % repos))
+        self.assertTrue(os.path.exists('%s/versions/001_foo_mydb_upgrade.sql' % repos))
+        self.assertTrue(os.path.exists('%s/versions/001_foo_mydb_downgrade.sql' % repos))
 
         # Test creating a second
         result = self.env.run('migrate script_sql postgres foo --repository=%s' % repos)
-        self.assert_(os.path.exists('%s/versions/002_foo_postgres_upgrade.sql' % repos))
-        self.assert_(os.path.exists('%s/versions/002_foo_postgres_downgrade.sql' % repos))
+        self.assertTrue(os.path.exists('%s/versions/002_foo_postgres_upgrade.sql' % repos))
+        self.assertTrue(os.path.exists('%s/versions/002_foo_postgres_downgrade.sql' % repos))
 
         # TODO: test --previews
 
     def test_manage(self):
         """Create a project management script"""
         script = self.tmp_py()
-        self.assert_(not os.path.exists(script))
+        self.assertTrue(not os.path.exists(script))
 
         # No attempt is made to verify correctness of the repository path here
         result = self.env.run('migrate manage %s --repository=/bla/' % script)
-        self.assert_(os.path.exists(script))
+        self.assertTrue(os.path.exists(script))
 
 
 class TestShellRepository(Shell):
@@ -177,7 +178,7 @@ class TestShellRepository(Shell):
 
         filename = '%s/versions/001_Desc.py' % self.path_repos
         source = open(filename).read()
-        self.assert_(source.find('def upgrade') >= 0)
+        self.assertTrue(source.find('def upgrade') >= 0)
 
         # Version is now 1
         result = self.env.run('migrate version %s' % self.path_repos)
@@ -190,10 +191,10 @@ class TestShellRepository(Shell):
         # We can also send the source to a file... test that too
         result = self.env.run('migrate source 1 %s --repository=%s' %
             (filename, self.path_repos))
-        self.assert_(os.path.exists(filename))
+        self.assertTrue(os.path.exists(filename))
         fd = open(filename)
         result = fd.read()
-        self.assert_(result.strip() == source.strip())
+        self.assertTrue(result.strip() == source.strip())
 
 
 class TestShellDatabase(Shell, DB):
@@ -202,7 +203,7 @@ class TestShellDatabase(Shell, DB):
     # we need to connect to the DB to see if things worked
 
     level = DB.CONNECT
-        
+
     @usedb()
     def test_version_control(self):
         """Ensure we can set version control on a database"""
@@ -298,7 +299,7 @@ class TestShellDatabase(Shell, DB):
 
         result = self.env.run('migrate upgrade %s %s' % (self.url, repos_path))
         self.assertEqual(self.run_db_version(self.url, repos_path), 1)
-        
+
         # Downgrade must have a valid version specified
         result = self.env.run('migrate downgrade %s %s' % (self.url, repos_path), expect_error=True)
         self.assertEqual(result.returncode, 2)
@@ -307,10 +308,10 @@ class TestShellDatabase(Shell, DB):
         result = self.env.run('migrate downgrade %s %s 2' % (self.url, repos_path), expect_error=True)
         self.assertEqual(result.returncode, 2)
         self.assertEqual(self.run_db_version(self.url, repos_path), 1)
-        
+
         result = self.env.run('migrate downgrade %s %s 0' % (self.url, repos_path))
         self.assertEqual(self.run_db_version(self.url, repos_path), 0)
-        
+
         result = self.env.run('migrate downgrade %s %s 1' % (self.url, repos_path), expect_error=True)
         self.assertEqual(result.returncode, 2)
         self.assertEqual(self.run_db_version(self.url, repos_path), 0)
@@ -348,7 +349,7 @@ class TestShellDatabase(Shell, DB):
         self.assertRaises(Exception, self.engine.text('select * from t_table').execute)
 
     # The tests below are written with some postgres syntax, but the stuff
-    # being tested (.sql files) ought to work with any db. 
+    # being tested (.sql files) ought to work with any db.
     @usedb(supported='postgres')
     def test_sqlfile(self):
         upgrade_script = """
@@ -362,7 +363,7 @@ class TestShellDatabase(Shell, DB):
         """
         self.meta.drop_all()
         self._run_test_sqlfile(upgrade_script, downgrade_script)
-        
+
     @usedb(supported='postgres')
     def test_sqlfile_comment(self):
         upgrade_script = """
@@ -400,11 +401,11 @@ class TestShellDatabase(Shell, DB):
         script_text='''
         from sqlalchemy import *
         from migrate import *
-        
+
         def upgrade():
             print 'fgsfds'
             raise Exception()
-        
+
         def downgrade():
             print 'sdfsgf'
             raise Exception()
@@ -425,7 +426,7 @@ class TestShellDatabase(Shell, DB):
         from migrate import *
 
         from migrate.changeset import schema
-        
+
         meta = MetaData(migrate_engine)
         account = Table('account', meta,
             Column('id', Integer, primary_key=True),
@@ -436,7 +437,7 @@ class TestShellDatabase(Shell, DB):
             # Upgrade operations go here. Don't create your own engine; use the engine
             # named 'migrate_engine' imported from migrate.
             meta.create_all()
-        
+
         def downgrade():
             # Operations to reverse the above upgrade go here.
             meta.drop_all()
@@ -447,7 +448,7 @@ class TestShellDatabase(Shell, DB):
         result = self.env.run('migrate test %s %s' % (self.url, repos_path))
         self.assertEqual(self.run_version(repos_path), 1)
         self.assertEqual(self.run_db_version(self.url, repos_path), 0)
-        
+
     @usedb()
     def test_rundiffs_in_shell(self):
         # This is a variant of the test_schemadiff tests but run through the shell level.
@@ -473,19 +474,19 @@ class TestShellDatabase(Shell, DB):
         # Setup helper script.
         result = self.env.run('migrate manage %s --repository=%s --url=%s --model=%s'\
             % (script_path, repos_path, self.url, model_module))
-        self.assert_(os.path.exists(script_path))
+        self.assertTrue(os.path.exists(script_path))
 
         # Model is defined but database is empty.
         result = self.env.run('migrate compare_model_to_db %s %s --model=%s' \
             % (self.url, repos_path, model_module))
-        self.assert_("tables missing from database: tmp_account_rundiffs" in result.stdout)
+        self.assertTrue("tables missing from database: tmp_account_rundiffs" in result.stdout)
 
         # Test Deprecation
         result = self.env.run('migrate compare_model_to_db %s %s --model=%s' \
             % (self.url, repos_path, model_module.replace(":", ".")), expect_error=True)
         self.assertEqual(result.returncode, 0)
         self.assertTrue("DeprecationWarning" in result.stderr)
-        self.assert_("tables missing from database: tmp_account_rundiffs" in result.stdout)
+        self.assertTrue("tables missing from database: tmp_account_rundiffs" in result.stdout)
 
         # Update db to latest model.
         result = self.env.run('migrate update_db_from_model %s %s %s'\
@@ -495,14 +496,14 @@ class TestShellDatabase(Shell, DB):
 
         result = self.env.run('migrate compare_model_to_db %s %s %s'\
             % (self.url, repos_path, model_module))
-        self.assert_("No schema diffs" in result.stdout)
+        self.assertTrue("No schema diffs" in result.stdout)
 
         result = self.env.run('migrate drop_version_control %s %s' % (self.url, repos_path), expect_error=True)
         result = self.env.run('migrate version_control %s %s' % (self.url, repos_path))
 
         result = self.env.run('migrate create_model %s %s' % (self.url, repos_path))
         temp_dict = dict()
-        exec result.stdout in temp_dict
+        six.exec_(result.stdout, temp_dict)
 
         # TODO: breaks on SA06 and SA05 - in need of total refactor - use different approach
 
@@ -542,7 +543,7 @@ class TestShellDatabase(Shell, DB):
             ## Operations to reverse the above upgrade go here.
             #meta.bind = migrate_engine
             #tmp_account_rundiffs.drop()''')
-    
+
         ## Save the upgrade script.
         #result = self.env.run('migrate script Desc %s' % repos_path)
         #upgrade_script_path = '%s/versions/001_Desc.py' % repos_path
@@ -550,6 +551,6 @@ class TestShellDatabase(Shell, DB):
 
         #result = self.env.run('migrate compare_model_to_db %s %s %s'\
             #% (self.url, repos_path, model_module))
-        #self.assert_("No schema diffs" in result.stdout)
+        #self.assertTrue("No schema diffs" in result.stdout)
 
         self.meta.drop_all()  # in case junk tables are lying around in the test database

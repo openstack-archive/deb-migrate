@@ -23,7 +23,7 @@ class TestVerNum(fixture.Base):
         """Two version with the same number should be equal"""
         a = VerNum(1)
         b = VerNum(1)
-        self.assert_(a is b)
+        self.assertTrue(a is b)
 
         self.assertEqual(VerNum(VerNum(2)), VerNum(2))
 
@@ -31,11 +31,11 @@ class TestVerNum(fixture.Base):
         self.assertEqual(VerNum(1) + VerNum(1), VerNum(2))
         self.assertEqual(VerNum(1) + 1, 2)
         self.assertEqual(VerNum(1) + 1, '2')
-        self.assert_(isinstance(VerNum(1) + 1, VerNum))
+        self.assertTrue(isinstance(VerNum(1) + 1, VerNum))
 
     def test_sub(self):
         self.assertEqual(VerNum(1) - 1, 0)
-        self.assert_(isinstance(VerNum(1) - 1, VerNum))
+        self.assertTrue(isinstance(VerNum(1) - 1, VerNum))
         self.assertRaises(ValueError, lambda: VerNum(0) - 1)
 
     def test_eq(self):
@@ -46,29 +46,29 @@ class TestVerNum(fixture.Base):
         self.assertNotEqual(VerNum(1), 2)
 
     def test_ne(self):
-        self.assert_(VerNum(1) != 2)
+        self.assertTrue(VerNum(1) != 2)
         self.assertFalse(VerNum(1) != 1)
 
     def test_lt(self):
         self.assertFalse(VerNum(1) < 1)
-        self.assert_(VerNum(1) < 2)
+        self.assertTrue(VerNum(1) < 2)
         self.assertFalse(VerNum(2) < 1)
 
     def test_le(self):
-        self.assert_(VerNum(1) <= 1)
-        self.assert_(VerNum(1) <= 2)
+        self.assertTrue(VerNum(1) <= 1)
+        self.assertTrue(VerNum(1) <= 2)
         self.assertFalse(VerNum(2) <= 1)
 
     def test_gt(self):
         self.assertFalse(VerNum(1) > 1)
         self.assertFalse(VerNum(1) > 2)
-        self.assert_(VerNum(2) > 1)
+        self.assertTrue(VerNum(2) > 1)
 
     def test_ge(self):
-        self.assert_(VerNum(1) >= 1)
-        self.assert_(VerNum(2) >= 1)
+        self.assertTrue(VerNum(1) >= 1)
+        self.assertTrue(VerNum(2) >= 1)
         self.assertFalse(VerNum(1) >= 2)
-        
+
 
 class TestVersion(fixture.Pathed):
 
@@ -114,7 +114,7 @@ class TestVersion(fixture.Pathed):
         coll.create_new_python_version("'")
 
         ver = coll.version()
-        self.assert_(ver.script().source())
+        self.assertTrue(ver.script().source())
 
     def test_create_new_sql_version(self):
         coll = Collection(self.temp_usable_dir)
@@ -128,11 +128,11 @@ class TestVersion(fixture.Pathed):
 
     def test_selection(self):
         """Verify right sql script is selected"""
-        
+
         # Create empty directory.
         path = self.tmp_repos()
         os.mkdir(path)
-        
+
         # Create files -- files must be present or you'll get an exception later.
         python_file = '001_initial_.py'
         sqlite_upgrade_file = '001_sqlite_upgrade.sql'
@@ -143,13 +143,13 @@ class TestVersion(fixture.Pathed):
 
         ver = Version(1, path, [sqlite_upgrade_file])
         self.assertEqual(os.path.basename(ver.script('sqlite', 'upgrade').path), sqlite_upgrade_file)
-    
+
         ver = Version(1, path, [default_upgrade_file])
         self.assertEqual(os.path.basename(ver.script('default', 'upgrade').path), default_upgrade_file)
-    
+
         ver = Version(1, path, [sqlite_upgrade_file, default_upgrade_file])
         self.assertEqual(os.path.basename(ver.script('sqlite', 'upgrade').path), sqlite_upgrade_file)
-    
+
         ver = Version(1, path, [sqlite_upgrade_file, default_upgrade_file, python_file])
         self.assertEqual(os.path.basename(ver.script('postgres', 'upgrade').path), default_upgrade_file)
 
@@ -159,6 +159,15 @@ class TestVersion(fixture.Pathed):
     def test_bad_version(self):
         ver = Version(1, self.temp_usable_dir, [])
         self.assertRaises(ScriptError, ver.add_script, '123.sql')
+
+        # tests bad ibm_db_sa filename
+        ver = Version(123, self.temp_usable_dir, [])
+        self.assertRaises(ScriptError, ver.add_script,
+                          '123_ibm_db_sa_upgrade.sql')
+
+        # tests that the name is ok but the script doesn't exist
+        self.assertRaises(InvalidScriptError, ver.add_script,
+                          '123_test_ibm_db_sa_upgrade.sql')
 
         pyscript = os.path.join(self.temp_usable_dir, 'bla.py')
         open(pyscript, 'w')

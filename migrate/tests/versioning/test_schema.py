@@ -4,6 +4,8 @@
 import os
 import shutil
 
+import six
+
 from migrate import exceptions
 from migrate.versioning.schema import *
 from migrate.versioning import script, schemadiff
@@ -53,7 +55,7 @@ class TestControlledSchema(fixture.Pathed, fixture.DB):
         # Trying to create another DB this way fails: table exists
         self.assertRaises(exceptions.DatabaseAlreadyControlledError,
             ControlledSchema.create, self.engine, self.repos)
-        
+
         # We can load a controlled DB this way, too
         dbcontrol0 = ControlledSchema(self.engine, self.repos)
         self.assertEqual(dbcontrol, dbcontrol0)
@@ -67,7 +69,7 @@ class TestControlledSchema(fixture.Pathed, fixture.DB):
         dbcontrol0 = ControlledSchema(engine, self.repos.path)
         self.assertEqual(dbcontrol, dbcontrol0)
 
-        # Clean up: 
+        # Clean up:
         dbcontrol.drop()
 
         # Attempting to drop vc from a db without it should fail
@@ -84,7 +86,7 @@ class TestControlledSchema(fixture.Pathed, fixture.DB):
         version = 0
         dbcontrol = ControlledSchema.create(self.engine, self.repos, version)
         self.assertEqual(dbcontrol.version, version)
-        
+
         # Correct when we load it, too
         dbcontrol = ControlledSchema(self.engine, self.repos)
         self.assertEqual(dbcontrol.version, version)
@@ -117,7 +119,7 @@ class TestControlledSchema(fixture.Pathed, fixture.DB):
             # Can't have custom errors with assertRaises...
             try:
                 ControlledSchema.create(self.engine, self.repos, version)
-                self.assert_(False, repr(version))
+                self.assertTrue(False, repr(version))
             except exceptions.InvalidVersionError:
                 pass
 
@@ -125,7 +127,7 @@ class TestControlledSchema(fixture.Pathed, fixture.DB):
     def test_changeset(self):
         """Create changeset from controlled schema"""
         dbschema = ControlledSchema.create(self.engine, self.repos)
-        
+
         # empty schema doesn't have changesets
         cs = dbschema.changeset()
         self.assertEqual(cs, {})
@@ -143,7 +145,7 @@ class TestControlledSchema(fixture.Pathed, fixture.DB):
     @fixture.usedb()
     def test_upgrade_runchange(self):
         dbschema = ControlledSchema.create(self.engine, self.repos)
-        
+
         for i in range(10):
             self.repos.create_script('')
 
@@ -163,10 +165,10 @@ class TestControlledSchema(fixture.Pathed, fixture.DB):
     def test_create_model(self):
         """Test workflow to generate create_model"""
         model = ControlledSchema.create_model(self.engine, self.repos, declarative=False)
-        self.assertTrue(isinstance(model, basestring))
+        self.assertTrue(isinstance(model, six.string_types))
 
         model = ControlledSchema.create_model(self.engine, self.repos.path, declarative=True)
-        self.assertTrue(isinstance(model, basestring))
+        self.assertTrue(isinstance(model, six.string_types))
 
     @fixture.usedb()
     def test_compare_model_to_db(self):
@@ -184,7 +186,7 @@ class TestControlledSchema(fixture.Pathed, fixture.DB):
         dbschema = ControlledSchema.create(self.engine, self.repos)
 
         meta = self.construct_model()
-    
+
         dbschema.update_db_from_model(meta)
 
         # TODO: test for table version in db

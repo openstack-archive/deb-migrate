@@ -11,6 +11,7 @@ from migrate.changeset import constraint
 from migrate.changeset.schema import ColumnDelta
 from migrate.tests import fixture
 from migrate.tests.fixture.warnings import catch_warnings
+import six
 
 class TestAddDropColumn(fixture.DB):
     """Test add/drop column through all possible interfaces
@@ -65,7 +66,7 @@ class TestAddDropColumn(fixture.DB):
                 result = len(self.table.primary_key)
                 self.assertEqual(result, num_of_expected_cols)
 
-        # we have 1 columns and there is no data column  
+        # we have 1 columns and there is no data column
         assert_numcols(1)
         self.assertTrue(getattr(self.table.c, 'data', None) is None)
         if len(col_p) == 0:
@@ -74,7 +75,7 @@ class TestAddDropColumn(fixture.DB):
         create_column_func(col)
         assert_numcols(2)
         # data column exists
-        self.assert_(self.table.c.data.type.length, 40)
+        self.assertTrue(self.table.c.data.type.length, 40)
 
         col2 = self.table.c.data
         drop_column_func(col2)
@@ -109,11 +110,11 @@ class TestAddDropColumn(fixture.DB):
         ie. no table parameter passed to function
         """
         def add_func(col):
-            self.assert_(col.table is None, col.table)
+            self.assertTrue(col.table is None, col.table)
             self.table.append_column(col)
             return col.create()
         def drop_func(col):
-            #self.assert_(col.table is None,col.table)
+            #self.assertTrue(col.table is None,col.table)
             #self.table.append_column(col)
             return col.drop()
         return self.run_(add_func, drop_func)
@@ -147,7 +148,7 @@ class TestAddDropColumn(fixture.DB):
             # Not necessarily bound to table
             return self.table.drop_column(col.name)
         return self.run_(add_func, drop_func)
-        
+
     @fixture.usedb()
     def test_byname(self):
         """Add/drop columns via functions; by table object and column name"""
@@ -231,18 +232,18 @@ class TestAddDropColumn(fixture.DB):
 
         col.drop()
 
-    @fixture.usedb(not_supported='mysql')
+    @fixture.usedb(not_supported=['mysql'])
     def test_check(self):
         """Can create columns with check constraint"""
-        col = Column('data',
+        col = Column('foo',
                      Integer,
-                     sqlalchemy.schema.CheckConstraint('data > 4'))
+                     sqlalchemy.schema.CheckConstraint('foo > 4'))
         col.create(self.table)
 
         # check if constraint was added (cannot test on objects)
-        self.table.insert(values={'data': 5}).execute()
+        self.table.insert(values={'foo': 5}).execute()
         try:
-            self.table.insert(values={'data': 3}).execute()
+            self.table.insert(values={'foo': 3}).execute()
         except (sqlalchemy.exc.IntegrityError,
                 sqlalchemy.exc.ProgrammingError):
             pass
@@ -272,10 +273,11 @@ class TestAddDropColumn(fixture.DB):
         col.drop(self.table)
 
 # TODO: remove already attached columns with uniques, pks, fks ..
-    @fixture.usedb(not_supported='postgresql')
+    @fixture.usedb(not_supported=['ibm_db_sa', 'postgresql'])
     def test_drop_column_of_composite_index(self):
         # NOTE(rpodolyaka): postgresql automatically drops a composite index
         #                   if one of its columns is dropped
+        # NOTE(mriedem): DB2 does the same.
         self.table_idx.c.b.drop()
 
         reflected = Table(self.table_idx.name, MetaData(), autoload=True,
@@ -301,7 +303,7 @@ class TestAddDropColumn(fixture.DB):
                 if index.name=='ix_data':
                     break
             self.assertEqual(expected,index.unique)
-        
+
     @fixture.usedb()
     def test_index(self):
         col = Column('data', Integer)
@@ -310,7 +312,7 @@ class TestAddDropColumn(fixture.DB):
         self._check_index(False)
 
         col.drop()
-        
+
     @fixture.usedb()
     def test_index_unique(self):
         # shows how to create a unique index
@@ -331,7 +333,7 @@ class TestAddDropColumn(fixture.DB):
         self._check_index(True)
 
         col.drop()
-        
+
     @fixture.usedb()
     def test_server_defaults(self):
         """Can create columns with server_default values"""
@@ -381,7 +383,7 @@ class TestAddDropColumn(fixture.DB):
             sorted([i.name for i in self.table.indexes]),
             [u'ix_tmp_adddropcol_d1', u'ix_tmp_adddropcol_d2']
             )
-            
+
         # delete one
         self.table.c.d2.drop()
 
@@ -391,7 +393,7 @@ class TestAddDropColumn(fixture.DB):
             sorted([i.name for i in self.table.indexes]),
             [u'ix_tmp_adddropcol_d1']
             )
-            
+
     def _actual_foreign_keys(self):
         from sqlalchemy.schema import ForeignKeyConstraint
         result = []
@@ -399,18 +401,18 @@ class TestAddDropColumn(fixture.DB):
             if isinstance(cons,ForeignKeyConstraint):
                 col_names = []
                 for col_name in cons.columns:
-                    if not isinstance(col_name,basestring):
+                    if not isinstance(col_name,six.string_types):
                         col_name = col_name.name
                     col_names.append(col_name)
                 result.append(col_names)
         result.sort()
         return result
-        
+
     @fixture.usedb()
     def test_drop_with_foreign_keys(self):
         self.table.drop()
         self.meta.clear()
-        
+
         # create FK's target
         reftable = Table('tmp_ref', self.meta,
             Column('id', Integer, primary_key=True),
@@ -418,7 +420,7 @@ class TestAddDropColumn(fixture.DB):
         if self.engine.has_table(reftable.name):
             reftable.drop()
         reftable.create()
-        
+
         # add a table with two foreign key columns
         self.table = Table(
             self.table_name, self.meta,
@@ -431,41 +433,46 @@ class TestAddDropColumn(fixture.DB):
         # paranoid check
         self.assertEqual([['r1'],['r2']],
                          self._actual_foreign_keys())
-        
+
         # delete one
         if self.engine.name == 'mysql':
             constraint.ForeignKeyConstraint([self.table.c.r2], [reftable.c.id],
                                             name='test_fk2').drop()
         self.table.c.r2.drop()
-        
+
         # check remaining foreign key is there
         self.assertEqual([['r1']],
                          self._actual_foreign_keys())
-        
+
     @fixture.usedb()
     def test_drop_with_complex_foreign_keys(self):
         from sqlalchemy.schema import ForeignKeyConstraint
         from sqlalchemy.schema import UniqueConstraint
-        
+
         self.table.drop()
         self.meta.clear()
-        
+
+        # NOTE(mriedem): DB2 does not currently support unique constraints
+        # on nullable columns, so the columns that are used to create the
+        # foreign keys here need to be non-nullable for testing with DB2
+        # to work.
+
         # create FK's target
         reftable = Table('tmp_ref', self.meta,
             Column('id', Integer, primary_key=True),
-            Column('jd', Integer),
+            Column('jd', Integer, nullable=False),
             UniqueConstraint('id','jd')
             )
         if self.engine.has_table(reftable.name):
             reftable.drop()
         reftable.create()
-        
+
         # add a table with a complex foreign key constraint
         self.table = Table(
             self.table_name, self.meta,
             Column('id', Integer, primary_key=True),
-            Column('r1', Integer),
-            Column('r2', Integer),
+            Column('r1', Integer, nullable=False),
+            Column('r2', Integer, nullable=False),
             ForeignKeyConstraint(['r1','r2'],
                                  [reftable.c.id,reftable.c.jd],
                                  name='test_fk')
@@ -475,21 +482,21 @@ class TestAddDropColumn(fixture.DB):
         # paranoid check
         self.assertEqual([['r1','r2']],
                          self._actual_foreign_keys())
-        
+
         # delete one
         if self.engine.name == 'mysql':
             constraint.ForeignKeyConstraint([self.table.c.r1, self.table.c.r2],
                                             [reftable.c.id, reftable.c.jd],
                                             name='test_fk').drop()
         self.table.c.r2.drop()
-        
+
         # check the constraint is gone, since part of it
         # is no longer there - if people hit this,
         # they may be confused, maybe we should raise an error
         # and insist that the constraint is deleted first, separately?
         self.assertEqual([],
                          self._actual_foreign_keys())
-        
+
 class TestRename(fixture.DB):
     """Tests for table and index rename methods"""
     level = fixture.DB.CONNECT
@@ -569,7 +576,7 @@ class TestRename(fixture.DB):
             # test by just the string
             rename_table(table_name1, table_name2, engine=self.engine)
             assert_table_name(table_name2, True)   # object not updated
-    
+
             # Index renames
             if self.url.startswith('sqlite') or self.url.startswith('mysql'):
                 self.assertRaises(exceptions.NotSupportedError,
@@ -606,7 +613,7 @@ class TestColumnChange(fixture.DB):
             self.table.drop()
         try:
             self.table.create()
-        except sqlalchemy.exc.SQLError, e:
+        except sqlalchemy.exc.SQLError:
             # SQLite: database schema has changed
             if not self.url.startswith('sqlite://'):
                 raise
@@ -615,7 +622,7 @@ class TestColumnChange(fixture.DB):
         if self.table.exists():
             try:
                 self.table.drop(self.engine)
-            except sqlalchemy.exc.SQLError,e:
+            except sqlalchemy.exc.SQLError:
                 # SQLite: database schema has changed
                 if not self.url.startswith('sqlite://'):
                     raise
@@ -636,14 +643,14 @@ class TestColumnChange(fixture.DB):
         self.refresh_table()
         alter_column(self.table.c.data2, name='atad')
         self.refresh_table(self.table.name)
-        self.assert_('data' not in self.table.c.keys())
-        self.assert_('atad' in self.table.c.keys())
+        self.assertTrue('data' not in self.table.c.keys())
+        self.assertTrue('atad' in self.table.c.keys())
         self.assertEqual(num_rows(self.table.c.atad, content), 1)
 
         # ...as a method, given a new name
         self.table.c.atad.alter(name='data')
         self.refresh_table(self.table.name)
-        self.assert_('atad' not in self.table.c.keys())
+        self.assertTrue('atad' not in self.table.c.keys())
         self.table.c.data # Should not raise exception
         self.assertEqual(num_rows(self.table.c.data, content), 1)
 
@@ -652,7 +659,7 @@ class TestColumnChange(fixture.DB):
                      name = 'atad', type=String(40),
                      server_default=self.table.c.data.server_default)
         self.refresh_table(self.table.name)
-        self.assert_('data' not in self.table.c.keys())
+        self.assertTrue('data' not in self.table.c.keys())
         self.table.c.atad   # Should not raise exception
         self.assertEqual(num_rows(self.table.c.atad, content), 1)
 
@@ -662,10 +669,10 @@ class TestColumnChange(fixture.DB):
             server_default=self.table.c.atad.server_default
             )
         self.refresh_table(self.table.name)
-        self.assert_('atad' not in self.table.c.keys())
+        self.assertTrue('atad' not in self.table.c.keys())
         self.table.c.data   # Should not raise exception
         self.assertEqual(num_rows(self.table.c.data,content), 1)
-        
+
     @fixture.usedb()
     def test_type(self):
         # Test we can change a column's type
@@ -673,34 +680,34 @@ class TestColumnChange(fixture.DB):
         # Just the new type
         self.table.c.data.alter(type=String(43))
         self.refresh_table(self.table.name)
-        self.assert_(isinstance(self.table.c.data.type, String))
+        self.assertTrue(isinstance(self.table.c.data.type, String))
         self.assertEqual(self.table.c.data.type.length, 43)
 
         # Different type
-        self.assert_(isinstance(self.table.c.id.type, Integer))
+        self.assertTrue(isinstance(self.table.c.id.type, Integer))
         self.assertEqual(self.table.c.id.nullable, False)
 
         if not self.engine.name == 'firebird':
             self.table.c.id.alter(type=String(20))
             self.assertEqual(self.table.c.id.nullable, False)
             self.refresh_table(self.table.name)
-            self.assert_(isinstance(self.table.c.id.type, String))
+            self.assertTrue(isinstance(self.table.c.id.type, String))
 
     @fixture.usedb()
     def test_default(self):
         """Can change a column's server_default value (DefaultClauses only)
-        Only DefaultClauses are changed here: others are managed by the 
+        Only DefaultClauses are changed here: others are managed by the
         application / by SA
         """
         self.assertEqual(self.table.c.data.server_default.arg, 'tluafed')
 
-        # Just the new default 
+        # Just the new default
         default = 'my_default'
         self.table.c.data.alter(server_default=DefaultClause(default))
         self.refresh_table(self.table.name)
         #self.assertEqual(self.table.c.data.server_default.arg,default)
         # TextClause returned by autoload
-        self.assert_(default in str(self.table.c.data.server_default.arg))
+        self.assertTrue(default in str(self.table.c.data.server_default.arg))
         self.engine.execute(self.table.insert(), id=12)
         row = self._select_row()
         self.assertEqual(row['data'], default)
@@ -709,7 +716,7 @@ class TestColumnChange(fixture.DB):
         default = 'your_default'
         self.table.c.data.alter(type=String(40), server_default=DefaultClause(default))
         self.refresh_table(self.table.name)
-        self.assert_(default in str(self.table.c.data.server_default.arg))
+        self.assertTrue(default in str(self.table.c.data.server_default.arg))
 
         # Drop/remove default
         self.table.c.data.alter(server_default=None)
@@ -717,10 +724,10 @@ class TestColumnChange(fixture.DB):
 
         self.refresh_table(self.table.name)
         # server_default isn't necessarily None for Oracle
-        #self.assert_(self.table.c.data.server_default is None,self.table.c.data.server_default)
+        #self.assertTrue(self.table.c.data.server_default is None,self.table.c.data.server_default)
         self.engine.execute(self.table.insert(), id=11)
         row = self.table.select(self.table.c.id == 11).execution_options(autocommit=True).execute().fetchone()
-        self.assert_(row['data'] is None, row['data'])
+        self.assertTrue(row['data'] is None, row['data'])
 
     @fixture.usedb(not_supported='firebird')
     def test_null(self):
@@ -744,7 +751,7 @@ class TestColumnChange(fixture.DB):
             # py 2.4 compatability :-/
             cw = catch_warnings(record=True)
             w = cw.__enter__()
-            
+
             warnings.simplefilter("always")
             self.table.c.data.alter(Column('data', String(100)))
 
@@ -757,13 +764,13 @@ class TestColumnChange(fixture.DB):
                 str(w[-1].message))
         finally:
             cw.__exit__()
-            
+
     @fixture.usedb()
     def test_alter_returns_delta(self):
         """Test if alter constructs return delta"""
 
         delta = self.table.c.data.alter(type=String(100))
-        self.assert_('type' in delta)
+        self.assertTrue('type' in delta)
 
     @fixture.usedb()
     def test_alter_all(self):
@@ -785,7 +792,7 @@ class TestColumnChange(fixture.DB):
         if self.engine.name == 'firebird':
             del kw['nullable']
         self.table.c.data.alter(**kw)
-        
+
         # test altered objects
         self.assertEqual(self.table.c.data.server_default.arg, 'foobar')
         if not self.engine.name == 'firebird':
@@ -837,7 +844,7 @@ class TestColumnDelta(fixture.DB):
 
     def verify(self, expected, original, *p, **k):
         self.delta = ColumnDelta(original, *p, **k)
-        result = self.delta.keys()
+        result = list(self.delta.keys())
         result.sort()
         self.assertEqual(expected, result)
         return self.delta
@@ -880,12 +887,12 @@ class TestColumnDelta(fixture.DB):
 
         col = self.mkcol(server_default='foobar')
         self.verify(['type'], col, self.mkcol('id', Text, DefaultClause('foobar')), alter_metadata=True)
-        self.assert_(isinstance(col.type, Text))
+        self.assertTrue(isinstance(col.type, Text))
 
         col = self.mkcol()
         self.verify(['name', 'server_default', 'type'], col, self.mkcol('beep', Text, DefaultClause('foobar')),
                     alter_metadata=True)
-        self.assert_(isinstance(col.type, Text))
+        self.assertTrue(isinstance(col.type, Text))
         self.assertEqual(col.name, 'beep')
         self.assertEqual(col.server_default.arg, 'foobar')
 
@@ -902,7 +909,7 @@ class TestColumnDelta(fixture.DB):
         self.meta.clear()
         delta = self.verify(['type'], 'ids', table=self.table.name, type=String(80), metadata=self.meta,
                             alter_metadata=True)
-        self.assert_(self.table.name in self.meta)
+        self.assertTrue(self.table.name in self.meta)
         self.assertEqual(delta.result_column.type.length, 80)
         self.assertEqual(self.meta.tables.get(self.table.name).c.ids.type.length, 80)
 
@@ -936,7 +943,7 @@ class TestColumnDelta(fixture.DB):
 
         col_orig = self.mkcol(primary_key=True)
         self.verify(['name', 'type'], col_orig, name='id12', type=Text, alter_metadata=True)
-        self.assert_(isinstance(col_orig.type, Text))
+        self.assertTrue(isinstance(col_orig.type, Text))
         self.assertEqual(col_orig.name, 'id12')
 
         # test server default
@@ -950,7 +957,7 @@ class TestColumnDelta(fixture.DB):
         # no change
         col_orig = self.mkcol(server_default=DefaultClause('foobar'))
         delta = self.verify(['type'], col_orig, DefaultClause('foobar'), type=PickleType)
-        self.assert_(isinstance(delta.result_column.type, PickleType))
+        self.assertTrue(isinstance(delta.result_column.type, PickleType))
 
         # TODO: test server on update
         # TODO: test bind metadata

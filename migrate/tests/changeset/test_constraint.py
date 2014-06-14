@@ -13,7 +13,7 @@ from migrate.tests import fixture
 
 class CommonTestConstraint(fixture.DB):
     """helper functions to test constraints.
-    
+
     we just create a fresh new table and make sure everything is
     as required.
     """
@@ -41,7 +41,7 @@ class CommonTestConstraint(fixture.DB):
 
         # make sure we start at zero
         self.assertEqual(len(self.table.primary_key), 0)
-        self.assert_(isinstance(self.table.primary_key,
+        self.assertTrue(isinstance(self.table.primary_key,
             schema.PrimaryKeyConstraint), self.table.primary_key.__class__)
 
 
@@ -68,7 +68,7 @@ class TestConstraint(CommonTestConstraint):
         pk.drop()
         self.refresh_table()
         self.assertEqual(len(self.table.primary_key), 0)
-        self.assert_(isinstance(self.table.primary_key, schema.PrimaryKeyConstraint))
+        self.assertTrue(isinstance(self.table.primary_key, schema.PrimaryKeyConstraint))
         return pk
 
     @fixture.usedb(not_supported='sqlite')
@@ -88,9 +88,9 @@ class TestConstraint(CommonTestConstraint):
                                   name="fk_id_fkey",
                                   ondelete="CASCADE")
         if SQLA_07:
-            self.assert_(list(self.table.c.fkey.foreign_keys) is not [])
+            self.assertTrue(list(self.table.c.fkey.foreign_keys) is not [])
         else:
-            self.assert_(self.table.c.fkey.foreign_keys._list is not [])
+            self.assertTrue(self.table.c.fkey.foreign_keys._list is not [])
         for key in fk.columns:
             self.assertEqual(key, self.table.c.fkey.name)
         self.assertEqual([e.column for e in fk.elements], [self.table.c.id])
@@ -112,9 +112,9 @@ class TestConstraint(CommonTestConstraint):
 
         self.refresh_table()
         if SQLA_07:
-            self.assert_(list(self.table.c.fkey.foreign_keys) is not [])
+            self.assertTrue(list(self.table.c.fkey.foreign_keys) is not [])
         else:
-            self.assert_(self.table.c.fkey.foreign_keys._list is not [])
+            self.assertTrue(self.table.c.fkey.foreign_keys._list is not [])
 
         fk.drop()
         self.refresh_table()
@@ -257,7 +257,7 @@ class TestAutoname(CommonTestConstraint):
         cons = CheckConstraint('id > 3', columns=[self.table.c.id])
         cons.create()
         self.refresh_table()
-    
+
         if not self.engine.name == 'mysql':
             self.table.insert(values={'id': 4, 'fkey': 1}).execute()
             try:
@@ -274,13 +274,13 @@ class TestAutoname(CommonTestConstraint):
         self.table.insert(values={'id': 2, 'fkey': 2}).execute()
         self.table.insert(values={'id': 1, 'fkey': 3}).execute()
 
-    @fixture.usedb(not_supported=['oracle', 'sqlite'])
+    @fixture.usedb(not_supported=['oracle'])
     def test_autoname_unique(self):
         """UniqueConstraints can guess their name if None is given"""
         cons = UniqueConstraint(self.table.c.fkey)
         cons.create()
         self.refresh_table()
-    
+
         self.table.insert(values={'fkey': 4, 'id': 1}).execute()
         try:
             self.table.insert(values={'fkey': 4, 'id': 2}).execute()

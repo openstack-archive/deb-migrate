@@ -18,7 +18,7 @@ class SchemaDiffBase(fixture.DB):
         )
         if kw.get('create',True):
             self.table.create()
-        
+
     def _assert_diff(self,col_A,col_B):
         self._make_table(col_A)
         self.meta.clear()
@@ -27,9 +27,9 @@ class SchemaDiffBase(fixture.DB):
         # print diff
         self.assertTrue(diff)
         self.assertEqual(1,len(diff.tables_different))
-        td = diff.tables_different.values()[0]
+        td = list(diff.tables_different.values())[0]
         self.assertEqual(1,len(td.columns_different))
-        cd = td.columns_different.values()[0]
+        cd = list(td.columns_different.values())[0]
         label_width = max(len(self.name1), len(self.name2))
         self.assertEqual(('Schema diffs:\n'
              '  table with differences: xtable\n'
@@ -43,16 +43,16 @@ class SchemaDiffBase(fixture.DB):
                 self.name2,
                 cd.col_B
                 ),str(diff))
-        
+
 class Test_getDiffOfModelAgainstDatabase(SchemaDiffBase):
     name1 = 'model'
     name2 = 'database'
-    
+
     def _run_diff(self,**kw):
         return schemadiff.getDiffOfModelAgainstDatabase(
             self.meta, self.engine, **kw
             )
-    
+
     @fixture.usedb()
     def test_table_missing_in_db(self):
         self._make_table(create=False)
@@ -157,7 +157,10 @@ class Test_getDiffOfModelAgainstDatabase(SchemaDiffBase):
             Column('data', Float()),
             )
 
-    @fixture.usedb()
+    # NOTE(mriedem): The ibm_db_sa driver handles the Float() as a DOUBLE()
+    # which extends Numeric() but isn't defined in sqlalchemy.types, so we
+    # can't check for it as a special case like is done in schemadiff.ColDiff.
+    @fixture.usedb(not_supported='ibm_db_sa')
     def test_float_vs_numeric(self):
         self._assert_diff(
             Column('data', Float()),
@@ -184,7 +187,7 @@ class Test_getDiffOfModelAgainstDatabase(SchemaDiffBase):
             Column('data', String(10)),
             Column('data', String(20)),
             )
-        
+
     @fixture.usedb()
     def test_integer_identical(self):
         self._make_table(
@@ -193,7 +196,7 @@ class Test_getDiffOfModelAgainstDatabase(SchemaDiffBase):
         diff = self._run_diff()
         self.assertEqual('No schema diffs',str(diff))
         self.assertFalse(diff)
-        
+
     @fixture.usedb()
     def test_string_identical(self):
         self._make_table(
