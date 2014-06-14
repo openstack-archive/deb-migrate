@@ -3,6 +3,7 @@ migrate (0.9.1-1) unstable; urgency=medium
   * New upstream release.
   * Removed SQLA 0.9 patches applied upstream.
   * Running testr without python setup.py.
+  * Fixed new (build-)dependencies for this release.
 
  -- Thomas Goirand <zigo@debian.org>  Sat, 14 Jun 2014 22:29:43 +0800
 
