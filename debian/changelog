@@ -1,3 +1,9 @@
+migrate (0.9.1-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Thomas Goirand <zigo@debian.org>  Sat, 14 Jun 2014 22:29:43 +0800
+
 migrate (0.8.5-1) unstable; urgency=medium
 
   * New upstream release.
