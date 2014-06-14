@@ -35,7 +35,13 @@ echo "===> Creating the db"
 echo "===> Doing the unit tests"
 # We set `pwd`/debian/bin in the path to have
 # our "migrate" binary accessible
-PATH=$PATH:`pwd`/debian/bin PYTHONPATH=. python setup.py testr --slowest || true
+rm -rf .testrepository
+testr init
+TEMP_REZ=`mktemp -t`
+PATH=$PATH:`pwd`/debian/bin PYTHONPATH=. testr run --subunit | tee $TEMP_REZ | subunit2pyunit || true
+cat $TEMP_REZ | subunit-filter -s --no-passthrough | subunit-stats || true
+rm -f $TEMP_REZ
+testr slowest
 
 echo "===> Shutting down MySQL"
 /usr/bin/mysqladmin --socket=${MYTEMP_DIR}/mysql.sock shutdown
