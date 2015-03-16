@@ -1,3 +1,10 @@
+migrate (0.9.5-1) UNRELEASED; urgency=medium
+
+  * New upstream release.
+  * Fixed (build-)dependencies.
+
+ -- Thomas Goirand <zigo@debian.org>  Mon, 16 Mar 2015 13:15:58 +0100
+
 migrate (0.9.1-1) unstable; urgency=medium
 
   * New upstream release.
