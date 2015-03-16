@@ -1,7 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import logging
+import re
 import shutil
+
+import sqlparse
 
 from migrate.versioning.script import base
 from migrate.versioning.template import Template
@@ -24,7 +27,7 @@ class SqlScript(base.BaseScript):
         return cls(path)
 
     # TODO: why is step parameter even here?
-    def run(self, engine, step=None, executemany=True):
+    def run(self, engine, step=None):
         """Runs SQL script through raw dbapi execute call"""
         text = self.source()
         # Don't rely on SA's autocommit here
@@ -34,15 +37,33 @@ class SqlScript(base.BaseScript):
         try:
             trans = conn.begin()
             try:
-                # HACK: SQLite doesn't allow multiple statements through
-                # its execute() method, but it provides executescript() instead
-                dbapi = conn.engine.raw_connection()
-                if executemany and getattr(dbapi, 'executescript', None):
-                    dbapi.executescript(text)
-                else:
-                    conn.execute(text)
+                # ignore transaction management statements that are
+                # redundant in SQL script context and result in
+                # operational error being returned.
+                #
+                # Note: we don't ignore ROLLBACK in migration scripts
+                # since its usage would be insane anyway, and we're
+                # better to fail on its occurance instead of ignoring it
+                # (and committing transaction, which is contradictory to
+                # the whole idea of ROLLBACK)
+                ignored_statements = ('BEGIN', 'END', 'COMMIT')
+                ignored_regex = re.compile('^\s*(%s).*;?$' % '|'.join(ignored_statements),
+                                           re.IGNORECASE)
+
+                # NOTE(ihrachys): script may contain multiple statements, and
+                # not all drivers reliably handle multistatement queries or
+                # commands passed to .execute(), so split them and execute one
+                # by one
+                text = sqlparse.format(text, strip_comments=True, strip_whitespace=True)
+                for statement in sqlparse.split(text):
+                    if statement:
+                        if re.match(ignored_regex, statement):
+                            log.warning('"%s" found in SQL script; ignoring' % statement)
+                        else:
+                            conn.execute(statement)
                 trans.commit()
-            except:
+            except Exception as e:
+                log.error("SQL script %s failed: %s", self.path, e)
                 trans.rollback()
                 raise
         finally:

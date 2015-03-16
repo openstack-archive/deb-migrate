@@ -14,6 +14,7 @@ from sqlalchemy.schema import (Index,
 
 from migrate.changeset import ansisql
 from migrate.changeset import constraint
+from migrate.changeset import util
 from migrate import exceptions
 
 
@@ -107,7 +108,8 @@ class IBMDBSchemaChanger(IBMDBSchemaGenerator, ansisql.ANSISchemaChanger):
         """Rename a table; #38. Other ops aren't supported."""
 
         self._rename_table(table)
-        self.append("TO %s" % self.preparer.quote(table.new_name, table.quote))
+        q = util.safe_quote(table)
+        self.append("TO %s" % self.preparer.quote(table.new_name, q))
         self.execute()
         self.append("COMMIT")
         self.execute()
@@ -128,10 +130,11 @@ class IBMDBSchemaChanger(IBMDBSchemaGenerator, ansisql.ANSISchemaChanger):
     def _run_subvisit(self, delta, func, start_alter=True):
         """Runs visit method based on what needs to be changed on column"""
         table = delta.table
+        q = util.safe_quote(table)
         if start_alter:
             self.start_alter_table(table)
         ret = func(table,
-                   self.preparer.quote(delta.current_name, delta.quote),
+                   self.preparer.quote(delta.current_name, q),
                    delta)
         self.execute()
         self._reorg_table(self.preparer.format_table(delta.table))
@@ -262,13 +265,13 @@ class IBMDBConstraintGenerator(ansisql.ANSIConstraintGenerator):
         if (isinstance(constraint, UniqueConstraint) and
                 is_unique_constraint_with_null_columns_supported(
                     self.dialect)):
-            for column in constraint.columns._all_cols:
+            for column in constraint:
                 if column.nullable:
                     constraint.exclude_nulls = True
                     break
         if getattr(constraint, 'exclude_nulls', None):
             index = Index(constraint.name,
-                          *(column for column in constraint.columns._all_cols),
+                          *(column for column in constraint),
                           unique=True)
             sql = self.process(CreateIndex(index))
             sql += ' EXCLUDE NULL KEYS'
@@ -285,7 +288,7 @@ class IBMDBConstraintDropper(ansisql.ANSIConstraintDropper,
         if (isinstance(constraint, UniqueConstraint) and
                 is_unique_constraint_with_null_columns_supported(
                     self.dialect)):
-            for column in constraint.columns._all_cols:
+            for column in constraint:
                 if column.nullable:
                     constraint.exclude_nulls = True
                     break

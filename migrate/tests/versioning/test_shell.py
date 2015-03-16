@@ -101,7 +101,7 @@ class TestShellCommands(Shell):
 
         # The default table should not be None
         repos_ = Repository(repos)
-        self.assertNotEquals(repos_.config.get('db_settings', 'version_table'), 'None')
+        self.assertNotEqual(repos_.config.get('db_settings', 'version_table'), 'None')
 
         # Can't create it again: it already exists
         result = self.env.run('migrate create %s repository_name' % repos,
@@ -485,7 +485,6 @@ class TestShellDatabase(Shell, DB):
         result = self.env.run('migrate compare_model_to_db %s %s --model=%s' \
             % (self.url, repos_path, model_module.replace(":", ".")), expect_error=True)
         self.assertEqual(result.returncode, 0)
-        self.assertTrue("DeprecationWarning" in result.stderr)
         self.assertTrue("tables missing from database: tmp_account_rundiffs" in result.stdout)
 
         # Update db to latest model.
