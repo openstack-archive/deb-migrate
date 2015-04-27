@@ -2,6 +2,7 @@ migrate (0.9.6-1) unstable; urgency=medium
 
   * New upstream release.
   * Fixed (build-)dependencies.
+  * Standards-Version: 3.9.6 (no change).
 
  -- Thomas Goirand <zigo@debian.org>  Mon, 16 Mar 2015 13:15:58 +0100
 
