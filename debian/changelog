@@ -1,4 +1,4 @@
-migrate (0.9.5-1) unstable; urgency=medium
+migrate (0.9.6-1) unstable; urgency=medium
 
   * New upstream release.
   * Fixed (build-)dependencies.

@@ -3,34 +3,34 @@ Section: python
 Priority: optional
 Maintainer: PKG OpenStack <openstack-devel@lists.alioth.debian.org>
 Uploaders: Thomas Goirand <zigo@debian.org>,
-           Jan Dittberner <jandd@debian.org>
+           Jan Dittberner <jandd@debian.org>,
 Build-Depends: debhelper (>= 9),
-               mysql-client,
-               mysql-server,
+               dh-python,
                openstack-pkg-tools,
-               python (>= 2.6.5~),
-               python-decorator,
-               python-feedparser,
-               python-fixtures (>= 0.3.14),
-               python-ibm-db-sa,
-               python-mock (>= 1.0),
-               python-mox,
-               python-mysqldb,
-               python-pbr (>= 0.5.21),
-               python-psycopg2,
-               python-scripttest,
-               python-setuptools (>= 0.6b3),
-               python-six (>= 1.7.0),
-               python-sphinx (>= 1.0.7+dfsg),
-               python-sqlalchemy,
-               python-sqlparse,
-               python-subunit (>= 0.0.18),
-               python-tempest-lib (>= 0.1.0),
-               python-tempita (>= 0.4),
-               python-testtools (>= 0.9.35),
-               python-tz,
-               subunit (>= 0.0.18),
-               testrepository (>= 0.0.17)
+               python-all,
+               python-pbr,
+               python-setuptools,
+               python-sphinx,
+Build-Depends-Indep: mysql-client,
+                     mysql-server,
+                     python-decorator,
+                     python-feedparser,
+                     python-fixtures,
+                     python-ibm-db-sa,
+                     python-mock,
+                     python-mox,
+                     python-mysqldb,
+                     python-psycopg2,
+                     python-scripttest,
+                     python-six,
+                     python-sqlalchemy,
+                     python-sqlparse,
+                     python-tempest-lib,
+                     python-tempita,
+                     python-testtools,
+                     python-tz,
+                     subunit,
+                     testrepository,
 Standards-Version: 3.9.5
 Homepage: https://github.com/stackforge/sqlalchemy-migrate
 Vcs-Git: git://anonscm.debian.org/openstack/migrate.git
@@ -38,18 +38,15 @@ Vcs-Browser: http://anonscm.debian.org/gitweb/?p=openstack/migrate.git;a=summary
 
 Package: python-migrate
 Architecture: all
-Pre-Depends: dpkg (>= 1.15.6~)
-Depends: libjs-sphinxdoc,
-         python-decorator,
-         python-pbr (>= 0.5.21),
-         python-pkg-resources,
-         python-six (>= 1.7.0),
-         python-sqlalchemy (>= 0.8),
+Depends: python-decorator,
+         python-pbr,
+         python-six,
+         python-sqlalchemy,
          python-sqlparse,
-         python-tempita (>= 0.4),
+         python-tempita,
          ${misc:Depends},
          ${python:Depends},
-         ${sphinxdoc:Depends}
+         ${sphinxdoc:Depends},
 Description: Database schema migration for SQLAlchemy
  Inspired by Ruby on Rails' migrations, migrate provides a way to deal
  with database schema changes in SQLAlchemy projects.
