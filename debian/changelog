@@ -1,3 +1,9 @@
+migrate (0.9.6-2) unstable; urgency=medium
+
+  * Makes the build reproducible thanks to Juan Picca (Closes: #789733).
+
+ -- Thomas Goirand <zigo@debian.org>  Fri, 26 Jun 2015 15:27:25 +0200
+
 migrate (0.9.6-1) unstable; urgency=medium
 
   * New upstream release.

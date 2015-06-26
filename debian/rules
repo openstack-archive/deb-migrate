@@ -12,6 +12,9 @@ DEB_UPSTREAM_VERSION=$(shell dpkg-parsechangelog \
 DOCS=$(shell find docs/ -name "*.rst" -printf "%p ")
 PYLIBDIR=$(call py_libdir,$(shell pyversions -d))
 
+LAST_CHANGE = $(shell dpkg-parsechangelog -S Date)
+BUILD_DATE  = $(shell LC_ALL=C date -u "+%B %d, %Y" -d "$(LAST_CHANGE)")
+
 %:
 	dh $@ --with python2,sphinxdoc --buildsystem=python_distutils
 
@@ -23,7 +26,7 @@ override_dh_auto_clean:
 
 override_dh_auto_install:
 	# install documentation
-	PYTHONPATH=$(CURDIR) sphinx-build -b html -a -E -N \
+	PYTHONPATH=$(CURDIR) sphinx-build -b html -a -E -N -D today="$(BUILD_DATE)" \
 	  doc/source \
 	  debian/python-migrate/usr/share/doc/python-migrate/html/
 	cp debian/install.tmpl debian/install
