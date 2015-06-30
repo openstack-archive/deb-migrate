@@ -51,6 +51,11 @@ cat $TEMP_REZ | subunit-filter -s --no-passthrough | subunit-stats
 rm -f $TEMP_REZ
 testr slowest
 
+# Redefine exit
+new_clean_exit () {
+	echo "===> test finished"
+}
+trap "new_clean_exit" EXIT
 clean_exit
 
 exit 0
