@@ -7,6 +7,7 @@ migrate (0.9.6-3) unstable; urgency=medium
   * Cleans-up correctly started MySQL after unit tests.
   * Updated watch file to use github/stackforge/sqlalchemy-migrate instead of
     broken PyPi.
+  * Rebuilt with sqlalchemy 1.0.6 (Closes: #790531).
 
  -- Thomas Goirand <zigo@debian.org>  Tue, 30 Jun 2015 17:11:00 +0200
 
