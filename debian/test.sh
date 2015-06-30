@@ -38,7 +38,7 @@ echo "===> Doing the unit tests"
 rm -rf .testrepository
 testr init
 TEMP_REZ=`mktemp -t`
-PATH=$PATH:`pwd`/debian/bin PYTHONPATH=. testr run --subunit | tee $TEMP_REZ | subunit2pyunit || true
+PATH=$PATH:`pwd`/debian/bin PYTHONPATH=. testr run --subunit 'tests\.(?!.*TestControlledSchema.*)' | tee $TEMP_REZ | subunit2pyunit || true
 cat $TEMP_REZ | subunit-filter -s --no-passthrough | subunit-stats || true
 rm -f $TEMP_REZ
 testr slowest
