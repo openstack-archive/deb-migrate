@@ -7,7 +7,7 @@ ME=`whoami`
 
 clean_exit () {
 	echo "===> Shutting down MySQL"
-	/usr/bin/mysqladmin --socket=${MYTEMP_DIR}/mysql.sock shutdown
+	/usr/bin/mysqladmin --socket=${MYTEMP_DIR}/mysql.sock --datadir=${MYTEMP_DIR} shutdown
 	echo "===> Removing temp folder"
 	rm -rf ${MYTEMP_DIR} 
 }
