@@ -2,6 +2,7 @@ migrate (0.9.6-3) unstable; urgency=medium
 
   * Disable all .*TestControlledSchema.* tests as they are broken (which
     doesn't mean SQLA-migrate itself is broken, just that tests are).
+  * Adds debian/patches/Update_tests_and_reqs_for_SQLA_1.0.patch.
 
  -- Thomas Goirand <zigo@debian.org>  Tue, 30 Jun 2015 17:11:00 +0200
 

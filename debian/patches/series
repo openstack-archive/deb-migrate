@@ -1,3 +1,4 @@
 use-local-intersphinx.patch
 keep_empty_modules.patch
 disable_issuetracker.patch
+Update_tests_and_reqs_for_SQLA_1.0.patch

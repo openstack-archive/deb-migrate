@@ -5,6 +5,14 @@ set -e
 MYTEMP_DIR=`mktemp -d`
 ME=`whoami`
 
+clean_exit () {
+	echo "===> Shutting down MySQL"
+	/usr/bin/mysqladmin --socket=${MYTEMP_DIR}/mysql.sock shutdown
+	echo "===> Removing temp folder"
+	rm -rf ${MYTEMP_DIR} 
+}
+trap "clean_exit" EXIT
+
 # --force is needed because buildd's can't resolve their own hostnames to ips
 echo "===> Preparing MySQL temp folder"
 mysql_install_db --no-defaults --datadir=${MYTEMP_DIR} --force --skip-name-resolve --user=${ME}
@@ -38,14 +46,11 @@ echo "===> Doing the unit tests"
 rm -rf .testrepository
 testr init
 TEMP_REZ=`mktemp -t`
-PATH=$PATH:`pwd`/debian/bin PYTHONPATH=. testr run --subunit 'tests\.(?!.*TestControlledSchema.*)' | tee $TEMP_REZ | subunit2pyunit || true
-cat $TEMP_REZ | subunit-filter -s --no-passthrough | subunit-stats || true
+PATH=$PATH:`pwd`/debian/bin PYTHONPATH=. testr run --subunit 'tests\.(?!.*TestControlledSchema.*)' | tee $TEMP_REZ | subunit2pyunit
+cat $TEMP_REZ | subunit-filter -s --no-passthrough | subunit-stats
 rm -f $TEMP_REZ
 testr slowest
 
-echo "===> Shutting down MySQL"
-/usr/bin/mysqladmin --socket=${MYTEMP_DIR}/mysql.sock shutdown
-echo "===> Removing temp folder"
-rm -rf ${MYTEMP_DIR} 
+clean_exit
 
 exit 0
