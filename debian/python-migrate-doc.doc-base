@@ -1,0 +1,9 @@
+Document: python-migrate-doc
+Title: SQLAlchemy Migrate Documentation
+Author: N/A
+Abstract: Sphinx documentation for SQLAlchemy Migrate
+Section: Programming/Python
+
+Format: HTML
+Index: /usr/share/doc/python-migrate-doc/html/index.html
+Files: /usr/share/doc/python-migrate-doc/html/*

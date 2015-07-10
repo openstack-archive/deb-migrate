@@ -1,3 +1,10 @@
+migrate (0.9.7-2) unstable; urgency=medium
+
+  * Added Python 3 support.
+  * Removed some old cruft from debian/rules.
+
+ -- Thomas Goirand <zigo@debian.org>  Fri, 10 Jul 2015 15:27:25 +0000
+
 migrate (0.9.7-1) unstable; urgency=medium
 
   * New upstream release.

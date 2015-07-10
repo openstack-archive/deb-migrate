@@ -11,8 +11,12 @@ Build-Depends: debhelper (>= 9),
                python-pbr,
                python-setuptools,
                python-sphinx,
+               python3-all,
+               python3-pbr,
+               python3-setuptools,
 Build-Depends-Indep: mysql-client,
                      mysql-server,
+                     python-coverage,
                      python-decorator,
                      python-feedparser,
                      python-fixtures,
@@ -23,12 +27,28 @@ Build-Depends-Indep: mysql-client,
                      python-psycopg2,
                      python-scripttest,
                      python-six,
+                     python-sphinxcontrib.issuetracker,
                      python-sqlalchemy,
                      python-sqlparse,
                      python-tempest-lib,
                      python-tempita,
                      python-testtools,
                      python-tz,
+                     python3-decorator,
+                     python3-feedparser,
+                     python3-fixtures,
+                     python3-mock,
+                     python3-mysqldb,
+                     python3-psycopg2,
+                     python3-scripttest,
+                     python3-six,
+                     python3-sqlalchemy,
+                     python3-sqlparse,
+                     python3-subunit,
+                     python3-tempest-lib,
+                     python3-tempita,
+                     python3-testtools,
+                     python3-tz,
                      subunit,
                      testrepository,
 Standards-Version: 3.9.6
@@ -47,7 +67,7 @@ Depends: python-decorator,
          ${misc:Depends},
          ${python:Depends},
          ${sphinxdoc:Depends},
-Description: Database schema migration for SQLAlchemy
+Description: Database schema migration for SQLAlchemy - Python 2.7
  Inspired by Ruby on Rails' migrations, migrate provides a way to deal
  with database schema changes in SQLAlchemy projects.
  .
@@ -61,3 +81,53 @@ Description: Database schema migration for SQLAlchemy
  SQLAlchemy-migrate has support for MySQL, PostgreSQL, SQLite and Oracle
  databases. The support for Oracle is not as well tested as the support for
  the other database systems.
+ .
+ This package provides the Python 2.7 module.
+
+Package: python3-migrate
+Architecture: all
+Depends: python3-decorator,
+         python3-pbr,
+         python3-six,
+         python3-sqlalchemy,
+         python3-sqlparse,
+         python3-tempita,
+         ${misc:Depends},
+         ${python3:Depends},
+Description: Database schema migration for SQLAlchemy - Python 3.x
+ Inspired by Ruby on Rails' migrations, migrate provides a way to deal
+ with database schema changes in SQLAlchemy projects.
+ .
+ SQLAlchemy-migrate is build on top of SQLAlchemy and provides a changeset
+ and a versioning API for database schemas as well as a script utilizing
+ these APIs. The database change sets are managed in a file based
+ repository allowing upgrades and downgrades of database schema versions.
+ The change sets may consist of Python code facilitating the changeset API
+ or SQL scripts.
+ .
+ SQLAlchemy-migrate has support for MySQL, PostgreSQL, SQLite and Oracle
+ databases. The support for Oracle is not as well tested as the support for
+ the other database systems.
+ .
+ This package provides the Python 3.x module.
+
+Package: python-migrate-doc
+Architecture: all
+Depends: ${misc:Depends},
+         ${sphinxdoc:Depends},
+Description: Database schema migration for SQLAlchemy - doc
+ Inspired by Ruby on Rails' migrations, migrate provides a way to deal
+ with database schema changes in SQLAlchemy projects.
+ .
+ SQLAlchemy-migrate is build on top of SQLAlchemy and provides a changeset
+ and a versioning API for database schemas as well as a script utilizing
+ these APIs. The database change sets are managed in a file based
+ repository allowing upgrades and downgrades of database schema versions.
+ The change sets may consist of Python code facilitating the changeset API
+ or SQL scripts.
+ .
+ SQLAlchemy-migrate has support for MySQL, PostgreSQL, SQLite and Oracle
+ databases. The support for Oracle is not as well tested as the support for
+ the other database systems.
+ .
+ This package contains the documentation.

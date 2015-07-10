@@ -1,5 +1,8 @@
 #!/usr/bin/make -f
 
+PYTHONS:=$(shell pyversions -vr)
+PYTHON3S:=$(shell py3versions -vr)
+
 UPSTREAM_GIT = git://github.com/stackforge/sqlalchemy-migrate.git
 include /usr/share/openstack-pkg-tools/pkgos.make
 
@@ -7,16 +10,11 @@ export OSLO_PACKAGE_VERSION=$(VERSION)
 
 include /usr/share/python/python.mk
 
-DEB_UPSTREAM_VERSION=$(shell dpkg-parsechangelog \
-	| sed -rne 's,^Version: ([^-]+).*,\1,p')
-DOCS=$(shell find docs/ -name "*.rst" -printf "%p ")
-PYLIBDIR=$(call py_libdir,$(shell pyversions -d))
-
 LAST_CHANGE = $(shell dpkg-parsechangelog -S Date)
 BUILD_DATE  = $(shell LC_ALL=C date -u "+%B %d, %Y" -d "$(LAST_CHANGE)")
 
 %:
-	dh $@ --with python2,sphinxdoc --buildsystem=python_distutils
+	dh $@ --buildsystem=python_distutils --with python2,python3,sphinxdoc
 
 override_dh_auto_clean:
 	rm -rf dist build
@@ -25,16 +23,25 @@ override_dh_auto_clean:
 	cp debian/test_db.cfg $(CURDIR)
 
 override_dh_auto_install:
-	# install documentation
-	PYTHONPATH=$(CURDIR) sphinx-build -b html -a -E -N -D today="$(BUILD_DATE)" \
-	  doc/source \
-	  debian/python-migrate/usr/share/doc/python-migrate/html/
-	cp debian/install.tmpl debian/install
-	find migrate/versioning/templates -type f ! -name '*.py' | \
-	while read name; do \
-		echo "$$name $(PYLIBDIR)/`dirname $$name`" >> debian/install; \
+	set -e ; for pyvers in $(PYTHONS); do \
+		python$$pyvers setup.py install --install-layout=deb \
+			--root $(CURDIR)/debian/python-migrate; \
 	done
-	dh_auto_install
+	set -e ; for pyvers in $(PYTHON3S); do \
+		python$$pyvers setup.py install --install-layout=deb \
+		--root $(CURDIR)/debian/python3-migrate; \
+	done
+	rm -f $(CURDIR)/debian/python*/usr/lib/python*/dist-packages/*.pth
+	mv $(CURDIR)/debian/python-migrate/usr/bin/migrate $(CURDIR)/debian/python-migrate/usr/bin/python2-migrate
+	mv $(CURDIR)/debian/python3-migrate/usr/bin/migrate $(CURDIR)/debian/python3-migrate/usr/bin/python3-migrate
+	mv $(CURDIR)/debian/python-migrate/usr/bin/migrate-repository $(CURDIR)/debian/python-migrate/usr/bin/python2-migrate-repository
+	mv $(CURDIR)/debian/python3-migrate/usr/bin/migrate-repository $(CURDIR)/debian/python3-migrate/usr/bin/python3-migrate-repository
+
+override_dh_sphinxdoc:
+ifeq (,$(findstring nodocs, $(DEB_BUILD_OPTIONS)))
+	PYTHONPATH=$(CURDIR) sphinx-build -b html -a -E -N -D today="$(BUILD_DATE)" doc/source debian/python-migrate-doc/usr/share/doc/python-migrate-doc/html/
+	dh_sphinxdoc -O--buildsystem=python_distutils
+endif
 
 override_dh_installchangelogs:
 	dh_installchangelogs -i doc/source/changelog.rst
@@ -42,8 +49,8 @@ override_dh_installchangelogs:
 override_dh_compress:
 	dh_compress -i -X.py -X.rst -X.js -Xobjects.inv
 
-ifeq (,$(findstring nocheck, $(DEB_BUILD_OPTIONS)))
 override_dh_auto_test:
+ifeq (,$(findstring nocheck, $(DEB_BUILD_OPTIONS)))
 	chmod +x debian/test.sh
 
 	# Create a working "migrate" binary, so that shell calls continue to

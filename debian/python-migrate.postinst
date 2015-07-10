@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = "configure" ] ; then
+	update-alternatives --install /usr/bin/migrate migrate /usr/bin/python2-migrate 300
+	update-alternatives --install /usr/bin/migrate-repository migrate-repository /usr/bin/python2-migrate-repository 300
+fi
+
+#DEBHELPER#
+
+exit 0

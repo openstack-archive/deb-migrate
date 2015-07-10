@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = "remove" ] || [ "$1" = "disappear" ] ; then
+	update-alternatives --remove migrate /usr/bin/python2-migrate
+	update-alternatives --remove migrate-repository /usr/bin/python2-migrate-repository
+fi
+
+#DEBHELPER#
+
+exit 0
