@@ -1,3 +1,9 @@
+migrate (0.9.7-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Thomas Goirand <zigo@debian.org>  Fri, 10 Jul 2015 08:06:27 +0000
+
 migrate (0.9.6-3) unstable; urgency=medium
 
   * Rebuilt with python-sqlalchemy 1.0.6.
