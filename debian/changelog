@@ -1,3 +1,9 @@
+migrate (0.9.7-4) unstable; urgency=medium
+
+  * Added patch to unrestrict PBR version.
+
+ -- Thomas Goirand <zigo@debian.org>  Tue, 28 Jul 2015 08:20:42 +0000
+
 migrate (0.9.7-3) unstable; urgency=medium
 
   * Adds fix-usage-function-for-python3.patch.

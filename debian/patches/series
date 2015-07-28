@@ -2,3 +2,4 @@ use-local-intersphinx.patch
 keep_empty_modules.patch
 disable_issuetracker.patch
 fix-usage-function-for-python3.patch
+do-not-impose-pbr-version.patch
