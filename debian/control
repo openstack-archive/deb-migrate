@@ -115,6 +115,8 @@ Package: python-migrate-doc
 Architecture: all
 Depends: ${misc:Depends},
          ${sphinxdoc:Depends},
+Breaks: python-migrate (<< 0.9.7-5~)
+Replaces: python-migrate (<< 0.9.7-5~)
 Description: Database schema migration for SQLAlchemy - doc
  Inspired by Ruby on Rails' migrations, migrate provides a way to deal
  with database schema changes in SQLAlchemy projects.

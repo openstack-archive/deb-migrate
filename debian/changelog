@@ -1,3 +1,9 @@
+migrate (0.9.7-6) unstable; urgency=medium
+
+  * Added missing Breaks+Replaces for the man page (Closes: #794044).
+
+ -- Thomas Goirand <zigo@debian.org>  Mon, 03 Aug 2015 08:32:36 +0000
+
 migrate (0.9.7-5) unstable; urgency=medium
 
   * Added missing copyright for setup.py (Closes: #793916).
