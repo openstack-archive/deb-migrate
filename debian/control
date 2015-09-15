@@ -112,6 +112,7 @@ Description: Database schema migration for SQLAlchemy - Python 3.x
  This package provides the Python 3.x module.
 
 Package: python-migrate-doc
+Section: doc
 Architecture: all
 Depends: ${misc:Depends},
          ${sphinxdoc:Depends},
