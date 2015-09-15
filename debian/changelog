@@ -1,6 +1,7 @@
 migrate (0.9.7-7) unstable; urgency=medium
 
   * Fixed section for the -doc package.
+  * Killed wrong debian/doc-base (it's now in debian/python-migrate-doc only).
 
  -- Thomas Goirand <zigo@debian.org>  Tue, 15 Sep 2015 09:49:48 +0000
 
