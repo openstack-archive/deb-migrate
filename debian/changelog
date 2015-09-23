@@ -1,3 +1,9 @@
+migrate (0.10.0-1) experimental; urgency=medium
+
+  * New upstream release.
+
+ -- Thomas Goirand <zigo@debian.org>  Thu, 24 Sep 2015 00:24:13 +0200
+
 migrate (0.9.7-7) unstable; urgency=medium
 
   * Fixed section for the -doc package.
