@@ -37,6 +37,9 @@ override_dh_auto_install:
 	mv $(CURDIR)/debian/python-migrate/usr/bin/migrate-repository $(CURDIR)/debian/python-migrate/usr/bin/python2-migrate-repository
 	mv $(CURDIR)/debian/python3-migrate/usr/bin/migrate-repository $(CURDIR)/debian/python3-migrate/usr/bin/python3-migrate-repository
 
+override_dh_python3:
+	dh_python3 --shebang=/usr/bin/python3
+
 override_dh_sphinxdoc:
 ifeq (,$(findstring nodocs, $(DEB_BUILD_OPTIONS)))
 	PYTHONPATH=$(CURDIR) sphinx-build -b html -a -E -N -D today="$(BUILD_DATE)" doc/source debian/python-migrate-doc/usr/share/doc/python-migrate-doc/html/
