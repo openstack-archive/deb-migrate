@@ -53,8 +53,8 @@ Build-Depends-Indep: mysql-client,
                      testrepository,
 Standards-Version: 3.9.6
 Homepage: https://github.com/stackforge/sqlalchemy-migrate
-Vcs-Git: git://anonscm.debian.org/openstack/migrate.git
-Vcs-Browser: http://anonscm.debian.org/gitweb/?p=openstack/migrate.git;a=summary
+Vcs-Git: https://anonscm.debian.org/git/openstack/migrate.git
+Vcs-Browser: https://anonscm.debian.org/cgit/openstack/migrate.git/
 
 Package: python-migrate
 Architecture: all
