@@ -1,6 +1,6 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: sqlalchemy-migrate
-Source: https://github.com/stackforge/sqlalchemy-migrate
+Source: https://github.com/openstack/sqlalchemy-migrate
 
 Files: debian/*
 Copyright: (c) 2006-2009, Jan Dittberner <jandd@debian.org>
