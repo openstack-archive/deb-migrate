@@ -67,6 +67,7 @@ Depends: python-decorator,
          ${misc:Depends},
          ${python:Depends},
          ${sphinxdoc:Depends},
+Suggests: python-migrate-doc,
 Description: Database schema migration for SQLAlchemy - Python 2.7
  Inspired by Ruby on Rails' migrations, migrate provides a way to deal
  with database schema changes in SQLAlchemy projects.
@@ -94,6 +95,7 @@ Depends: python3-decorator,
          python3-tempita,
          ${misc:Depends},
          ${python3:Depends},
+Suggests: python-migrate-doc,
 Description: Database schema migration for SQLAlchemy - Python 3.x
  Inspired by Ruby on Rails' migrations, migrate provides a way to deal
  with database schema changes in SQLAlchemy projects.
