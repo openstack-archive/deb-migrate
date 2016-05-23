@@ -2,7 +2,9 @@ migrate (0.10.0-4) UNRELEASED; urgency=medium
 
   * Fixed VCS URLs (https).
   * d/rules: Changed UPSTREAM_GIT to new URL
-  * d/copyright: Changed source URL to new one
+  * d/copyright
+    - Changed source URL to new one
+    - Reordered
   * Added suggests python-migrate-doc (Closes: #820656)
 
  -- Ondřej Nový <novy@ondrej.org>  Sun, 28 Feb 2016 15:27:54 +0100

@@ -2,6 +2,14 @@ Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: sqlalchemy-migrate
 Source: https://github.com/openstack/sqlalchemy-migrate
 
+Files: *
+Copyright: (c) 2013, OpenStack foundation
+           (c) 2006, Evan Rosson <evan.rosson@gmail.com>
+           (c) 2007-2009, Jan Dittberner
+           (c) 2007-2009, Christian Simms
+           (c) 2007-2009, Domen Kožar
+License: MIT
+
 Files: debian/*
 Copyright: (c) 2006-2009, Jan Dittberner <jandd@debian.org>
            (c) 2013, Thomas Goirand <zigo@debian.org>
@@ -10,14 +18,6 @@ License: GPL-2
 Files: setup.py
 Copyright: (c) 2013-2015, Hewlett-Packard Development Company, L.P.
 License: Apache-2.0
-
-Files: *
-Copyright: (c) 2013, OpenStack foundation
-           (c) 2006, Evan Rosson <evan.rosson@gmail.com>
-           (c) 2007-2009, Jan Dittberner
-           (c) 2007-2009, Christian Simms
-           (c) 2007-2009, Domen Kožar
-License: MIT
 
 License: MIT
  Permission is hereby granted, free of charge, to any person obtaining a copy
