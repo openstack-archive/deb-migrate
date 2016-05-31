@@ -21,6 +21,7 @@ override_dh_auto_clean:
 	find . -name '*\.py[co]' -exec rm {} \;
 	rm -f docs/reference.txt debian/install
 	cp debian/test_db.cfg $(CURDIR)
+	rm -rf .testrepository
 
 override_dh_auto_install:
 	set -e ; for pyvers in $(PYTHONS); do \

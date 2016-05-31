@@ -1,3 +1,10 @@
+migrate (0.10.0-5) UNRELEASED; urgency=medium
+
+  * Correctly cleans .testrepository.
+  * Ignore egg-info changes.
+
+ -- Thomas Goirand <zigo@debian.org>  Tue, 31 May 2016 14:17:32 +0200
+
 migrate (0.10.0-4) unstable; urgency=medium
 
   * Fixed VCS URLs (https).
