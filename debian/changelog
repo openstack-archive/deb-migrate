@@ -1,7 +1,12 @@
 migrate (0.10.0-5) UNRELEASED; urgency=medium
 
+  [ Thomas Goirand ]
   * Correctly cleans .testrepository.
   * Ignore egg-info changes.
+
+  [ Ondřej Nový ]
+  * d/s/options: extend-diff-ignore of .gitreview
+  * d/control: Using OpenStack's Gerrit as VCS URLs.
 
  -- Thomas Goirand <zigo@debian.org>  Tue, 31 May 2016 14:17:32 +0200
 
