@@ -1,4 +1,4 @@
-migrate (0.10.0-5) UNRELEASED; urgency=medium
+migrate (0.10.0-5) unstable; urgency=medium
 
   [ Thomas Goirand ]
   * Correctly cleans .testrepository.
