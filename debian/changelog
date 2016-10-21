@@ -1,3 +1,12 @@
+migrate (0.10.0-6) unstable; urgency=medium
+
+  * Using the correct options for mysql_install_db so that it continues to work
+    with MySQL 5.7.x.
+  * Build-Depends on default-mysql-client and default-mysql-server instead of
+    mysql-client & mysql-server (the later is kept as an alternative).
+
+ -- Thomas Goirand <zigo@debian.org>  Fri, 21 Oct 2016 09:33:40 +0200
+
 migrate (0.10.0-5) unstable; urgency=medium
 
   [ Thomas Goirand ]
