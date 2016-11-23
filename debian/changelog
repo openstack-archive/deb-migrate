@@ -1,3 +1,9 @@
+migrate (0.10.0-7) UNRELEASED; urgency=medium
+
+  * Bumped debhelper compat version to 10
+
+ -- Ondřej Nový <onovy@debian.org>  Wed, 23 Nov 2016 23:59:21 +0100
+
 migrate (0.10.0-6) unstable; urgency=medium
 
   * Using the correct options for mysql_install_db so that it continues to work
