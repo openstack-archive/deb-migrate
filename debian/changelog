@@ -1,8 +1,10 @@
-migrate (0.10.0-7) UNRELEASED; urgency=medium
+migrate (0.10.0-7) unstable; urgency=medium
 
+  * Team upload.
   * Bumped debhelper compat version to 10
+  * Rebuilt with new python-sqlalchemy
 
- -- Ondřej Nový <onovy@debian.org>  Wed, 23 Nov 2016 23:59:21 +0100
+ -- Ondřej Nový <onovy@debian.org>  Mon, 28 Nov 2016 12:13:03 +0100
 
 migrate (0.10.0-6) unstable; urgency=medium
 
